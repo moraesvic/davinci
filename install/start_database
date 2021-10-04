@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# The following line is everything that must be changed when deploying in the future.
+database="davinci"
+
+uname="${database}_admin"
+passwd="$(pwgen -s 10 1)"
+host="127.0.0.1"
+port=5432
+
+environment_file="../.env"
+
+echo "To run this script, you will need to log in as a super user in PostgreSQL server. Usually, this corresponds to Unix ''postgres'' account. If you are in the sudoers file, it will suffice to type in your account password below"
+
+sudo su postgres -c "psql -c \"CREATE USER $uname with encrypted password '$passwd'; \" -c \"CREATE DATABASE $database; \" -c \"GRANT ALL PRIVILEGES ON DATABASE $database TO $uname; \" "
+
+echo -e "If everything ran successfully, you can now log in to psql with the command:\n\npsql -h $host -p $port -d $database -U $uname\n\nThen type in the password: ''$passwd''.\n"
+
+echo -e "POSTGRES_USER=$uname\nPOSTGRES_PASSWORD=$passwd\nPOSTGRES_HOST=$host\nPOSTGRES_DATABASE=$database\nPOSTGRES_PORT=$port" >> $environment_file;
+
+echo -e "New credentials were saved to file ''$environment_file'', the file on project root holding environment variables"
