@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# The following line is everything that must be changed when deploying in the future.
+database="davinci"
+uname="${database}_admin"
+
+sudo su postgres \
+    -c "psql -c \"DROP DATABASE $database; \" \
+    -c \"DROP USER $uname; \" "
