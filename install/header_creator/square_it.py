@@ -1,20 +1,18 @@
-#!/usr/bin/python3
+#!/usr/bin/python
 
 import sys
 
 if len(sys.argv) != 2:
-    print(f"Usage: {sys.argv[0]} TEXT_TO_BE_SQUARED")
+    print "Usage: %s TEXT_TO_BE_SQUARED" % sys.argv[0]
     exit()
 
 string = sys.argv[1]
 arr = string.split('\n')
-print("#" * 60)
+print "#" * 60 
 
 for line in arr:
-    if len(line) == 0:
-        continue
-    print(f"# {line}", end="")
-    print(" " * (60 - len(line) - 3), end="")
-    print("#")
+    print "#", line,
+    print " " * (60 - len(line) - 5) ,
+    print "#" 
 
-print("#" * 60)
+print "#" * 60 

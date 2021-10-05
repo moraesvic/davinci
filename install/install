@@ -4,7 +4,7 @@
 # Header
 
 print_header="$(dirname "$0")/header_creator/long_header"
-$print_header
+>&2 $print_header
 
 ############################################################
 # Checking and reading arguments
