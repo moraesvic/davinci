@@ -1,0 +1,22 @@
+#!/bin/bash
+
+interactive=0
+
+for arg in "$@" ; do
+	if [ "$arg" = "-i" ] ; then
+		interactive=1
+		break
+	fi
+done
+
+if ((interactive)) ; then
+	read -rp "What is the project name? " project_name
+	read -rp "What is the URL of the Git repository? " repo_url
+	read -rp "Who was/were the authors? " author
+	read -rp "What is the author's email? " author_email
+	read -rp "Under what license is this program registered? " license
+	read -rp "Type in a URL containing this license. " license_url
+	read -rp "Type in any disclaimers for the use of this software. " disclaimer
+else
+	source "$(dirname "$0")/info"
+fi

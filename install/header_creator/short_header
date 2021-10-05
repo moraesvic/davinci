@@ -1,13 +1,23 @@
 #!/bin/bash
 
-# Option: -n for not prefixing every line with #
+############################################################
+# Usage options
+# -i : interactive -- calls a prompt to request information
+#      Otherwise, will read from file "info"
+# -n : don't prefix every line with #
 
-source "$(dirname "$0")/info"
+source "$(dirname "$0")/prompt"
 
 first_line="$project_name"
 
 if [ -n "$repo_url" ] ; then
 	first_line="$first_line <$repo_url>"
+fi
+
+license_url_parsed=""
+
+if [ -n "$license_url" ] ; then
+	license_url_parsed="<$license_url>"
 fi
 
 year=$(date +%Y)
@@ -17,13 +27,22 @@ os_info_2="$(uname -v)"
 short_header=$(cat << EOF
 $first_line
 (C) $author, $year <$author_email>
-License $license <$license_url>
+License $license $license_url_parsed
 EOF
 )
 
-if [ "$1" == "-n" ] ; then
-	echo "$short_header"
-else
+prefix=1
+for arg in "$@"; do
+	if [ "$arg" == "-n" ] ; then
+		prefix=0
+		break
+	fi
+done
+
+
+if ((prefix)) ; then
 	sed -rn 's/^(.*)$/# \1/p' <<< $short_header
 	echo ""
+else
+	echo "$short_header"
 fi
