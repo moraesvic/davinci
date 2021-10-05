@@ -1,0 +1,27 @@
+#!/bin/bash
+
+function printerr {
+    >&2 echo -e "($0) $1"    
+}
+
+function fatalerr {
+    printerr "ERROR: $1 Exiting..."
+    exit 1
+}
+
+function dirassert {
+    if [ ! -d "$1" ] ; then
+        printerr "Subdirectory \"$1\" does not exist yet. Creating..."
+        mkdir -p "$1" || ( fatalerr "Could not create directory for output." )
+    fi
+}
+
+function testfile {
+    if [ ! -f "$1" ] ; then
+        fatalerr "\"$1\" is not a file."
+    fi
+}
+
+function getroot {
+	echo "$(cd "$(dirname "$0")"; pwd -P)"
+}
