@@ -19,6 +19,6 @@ EOF
 )
 
 python_script="$(dirname "$0")/square_it.py"
-$python_script "$long_header"
+>&2 $python_script "$long_header"
 
-echo ""
+>&2 echo ""

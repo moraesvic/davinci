@@ -11,6 +11,8 @@ arr = string.split('\n')
 print("#" * 60)
 
 for line in arr:
+    if len(line) == 0:
+        continue
     print(f"# {line}", end="")
     print(" " * (60 - len(line) - 3), end="")
     print("#")

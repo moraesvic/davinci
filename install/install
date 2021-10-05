@@ -1,33 +1,58 @@
 #!/bin/bash
 
+############################################################
+# Header
+
 print_header="$(dirname "$0")/header_creator/long_header"
 $print_header
+
+############################################################
+# Checking and reading arguments
+
+if [ $# -ne 1 ] ; then
+	>&2 echo "Usage: ($0) DATABASE_NAME"
+	exit 1
+fi
+
+database="$1"
+
+############################################################
+# Checking whether environment file exists
+
+environment_file="../.env"
+
+# If file exists and has not zero size
+if [ -s "$environment_file" ] ; then
+	>&2 echo "It seems like the environment file was already configured. If you would like to start from a fresh installation, please run ./uninstall first"
+	exit 1
+fi
+
+############################################################
+# Checking for dependencies
+
+>&2 echo "Checking for dependencies..."
 
 dependencies=("node" "psql")
 for arg in ${dependencies[@]} ; do
 	if [ -z $(which "$arg") ] ; then
-		echo "You have unmet dependencies. Please install $arg before proceding with database installation."
+		>&2 echo "You have unmet dependencies. Please install $arg before proceding with database installation."
 		exit 1
 	fi
+	>&2 echo "$arg ... CHECK"
 done
 
-# The following line is everything that must be changed when deploying in the future.
-database="davinci"
+>&2 echo "All dependencies were met successfully"
+
+############################################################
+# Configuring PSQL
 
 uname="${database}_admin"
 passwd="$(pwgen -s 10 1)"
 host="127.0.0.1"
 port=5432
 
-environment_file="../.env"
 
-# If file and has not zero size
-if [ -s "$environment_file" ] ; then
-	>&2 echo "It seems like the environment file was already configured. If you would like to start from a fresh installation, please run ./uninstall first"
-	exit 1
-fi
-
-cat << EOF
+>&2 cat << EOF
 To run this script, you will need to log in as a super user in PostgreSQL server. \
 Usually, this corresponds to Unix ''postgres'' account. \
 If you are in the sudoers group, it will suffice to type in your account password below.
@@ -36,13 +61,13 @@ EOF
 sudo -i -u postgres bash << EOF || exit 1
 psql -c "CREATE USER $uname WITH ENCRYPTED PASSWORD '$passwd'; " \
 -c "CREATE DATABASE $database; " \
--c "GRANT ALL PRIVILEGES ON DATABASE $database TO $uname; "
+-c "GRANT ALL PRIVILEGES ON DATABASE $database TO $uname; " >&2
 EOF
 
-echo -e "\nStarting database...\n"
+>&2 echo -e "\nStarting database...\n"
 
 cat << EOF
-If everything ran successfully, you can now log in to psql with the command:
+You can now log in to psql with the command:
 
     psql -h $host -p $port -d $database -U $uname
 
@@ -62,10 +87,15 @@ New credentials were saved to file ''$environment_file'', \
 the file on project root holding environment variables.
 EOF
 
-echo -e "\n\nWe will now populate the created database $db"
+############################################################
+# Populating createad database
+
+>&2 echo -e "\nWe will now populate the created database $db"
 
 for sql_file in *.sql ; do
-    echo "Reading file $sql_file ..."
-    PGPASSWORD="$passwd" psql -U "$uname" -h "$host" -d "$database" \
+    >&2 echo "Reading file $sql_file ..."
+    >&2 PGPASSWORD="$passwd" psql -U "$uname" -h "$host" -d "$database" \
         -p "$port" -f "$sql_file"
 done
+
+>&2 echo "Done."

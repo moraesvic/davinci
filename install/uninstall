@@ -14,13 +14,13 @@ if [ ! -s "$environment_file" ] ; then
 	exit 1
 fi
 
-cat << EOF
+>&2 cat << EOF
 To uninstall, you will need to log in to Postgres as a super-user. Please type in your password in order to have sudo access.
 EOF
 
 sudo -i -u postgres bash << EOF || exit 1
 psql -c "DROP DATABASE $database; " \
--c "DROP USER $uname; "
+-c "DROP USER $uname; " >&2
 EOF
 
 rm "$environment_file"

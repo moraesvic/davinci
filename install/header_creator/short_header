@@ -22,8 +22,8 @@ EOF
 )
 
 if [ "$1" == "-n" ] ; then
-	echo "$short_header"
+	>&2 echo "$short_header"
 else
-	sed -rn 's/^(.*)$/# \1/p' <<< $short_header
-	echo ""
+	>&2 sed -rn 's/^(.*)$/# \1/p' <<< $short_header
+	>&2 echo ""
 fi
