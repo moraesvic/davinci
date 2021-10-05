@@ -1,0 +1,13 @@
+############################################################
+#
+# Da Vinci <https://github.com/moraesvic/davinci>
+# (C) Victor Moraes, 2021 <victor@vulpi-ideas.com>
+# License GPLv3+ <https://gnu.org/licenses/gpl.html>
+#
+# This is free software.
+# You are free to change and redistribute it.
+# There is NO WARRANTY, to the extent permitted by law.
+#
+# Developed in linuxmint 5.4.0-86-generic
+#
+############################################################

@@ -10,35 +10,44 @@ port=5432
 
 environment_file="../.env"
 
-text="To run this script, you will need to log in as a super user in PostgreSQL server. \
+# If file and has not zero size
+if [ -s "$environment_file" ] ; then
+	>&2 echo "It seems like the environment file was already configured. If you would like to start from a fresh installation, please run ./uninstall first"
+	exit 1
+fi
+
+cat << EOF
+To run this script, you will need to log in as a super user in PostgreSQL server. \
 Usually, this corresponds to Unix ''postgres'' account. \
-If you are in the sudoers group, it will suffice to type in your account password below."
+If you are in the sudoers group, it will suffice to type in your account password below.
+EOF
 
-echo "$text"
-
-sudo su postgres \
-    -c "psql -c \"CREATE USER $uname with encrypted password '$passwd'; \" \
-    -c \"CREATE DATABASE $database; \" \
-    -c \"GRANT ALL PRIVILEGES ON DATABASE $database TO $uname; \" "
+sudo -i -u postgres bash << EOF || exit 1
+psql -c "CREATE USER $uname WITH ENCRYPTED PASSWORD '$passwd'; " \
+-c "CREATE DATABASE $database; " \
+-c "GRANT ALL PRIVILEGES ON DATABASE $database TO $uname; "
+EOF
 
 echo -e "\nStarting database...\n"
 
-text="If everything ran successfully, you can now log in to psql with the command:
+cat << EOF
+If everything ran successfully, you can now log in to psql with the command:
 
     psql -h $host -p $port -d $database -U $uname
 
-Then type in the password: ''$passwd''."
+Then type in the password: ''$passwd''.
+EOF
 
-echo -e "$text"
-
-text="\
+cat > $environment_file << EOF 
 POSTGRES_USER=$uname
 POSTGRES_PASSWORD=$passwd
 POSTGRES_HOST=$host
 POSTGRES_DATABASE=$database
-POSTGRES_PORT=$port"
+POSTGRES_PORT=$port
+EOF
 
-echo "$text" > $environment_file;
+cat << EOF
+New credentials were saved to file ''$environment_file'', \
+the file on project root holding environment variables.
+EOF
 
-echo -e "New credentials were saved to file ''$environment_file'', " \
-    "the file on project root holding environment variables"

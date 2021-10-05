@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Option: -n for not prefixing every line with #
+
+source "$(dirname "$0")/info"
+
+first_line="$project_name"
+
+if [ -n "$repo_url" ] ; then
+	first_line="$first_line <$repo_url>"
+fi
+
+year=$(date +%Y)
+os_info_1="$(uname -sr) ($(uname -p))"
+os_info_2="$(uname -v)"
+
+short_header=$(cat << EOF
+$first_line
+(C) $author, $year <$author_email>
+License $license <$license_url>
+EOF
+)
+
+if [ "$1" == "-n" ] ; then
+	echo "$short_header"
+else
+	sed -rn 's/^(.*)$/# \1/p' <<< $short_header
+	echo ""
+fi

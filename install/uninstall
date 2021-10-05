@@ -1,9 +1,26 @@
 #!/bin/bash
 
+print_header="$(dirname "$0")/header_creator/short_header"
+$print_header
+
 # The following line is everything that must be changed when deploying in the future.
+
 database="davinci"
 uname="${database}_admin"
 
-sudo su postgres \
-    -c "psql -c \"DROP DATABASE $database; \" \
-    -c \"DROP USER $uname; \" "
+environment_file="../.env"
+if [ ! -s "$environment_file" ] ; then
+	>&2 echo "There is no environment file. Have you installed properly?"
+	exit 1
+fi
+
+cat << EOF
+To uninstall, you will need to log in to Postgres as a super-user. Please type in your password in order to have sudo access.
+EOF
+
+sudo -i -u postgres bash << EOF || exit 1
+psql -c "DROP DATABASE $database; " \
+-c "DROP USER $uname; "
+EOF
+
+rm "$environment_file"

@@ -1,4 +1,17 @@
 #!/bin/bash
 
-./start_database
-./insert_database
+print_header="$(dirname "$0")/header_creator/long_header"
+$print_header
+
+dependencies=("node" "psql")
+for arg in ${dependencies[@]} ; do
+	if [ -z $(which "$arg") ] ; then
+		echo "You have unmet dependencies. Please install $arg before proceding with database installation."
+		exit 1
+	fi
+done
+
+start_database="$(dirname "$0")/start_database"
+insert_database="$(dirname "$0")/insert_database"
+
+$start_database && $insert_database

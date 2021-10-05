@@ -1,0 +1,17 @@
+#!/bin/bash
+
+project_name="Da Vinci"
+repo_url="https://github.com/moraesvic/davinci"
+
+author="Victor Moraes"
+author_email="victor@vulpi-ideas.com"
+
+license="GPLv3+"
+license_url="https://gnu.org/licenses/gpl.html"
+
+disclaimer=$(cat << EOF
+This is free software.
+You are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+EOF
+)
