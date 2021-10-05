@@ -9,16 +9,6 @@ print_header="$(dirname "$0")/header_creator/long_header"
 >&2 $print_header
 
 ############################################################
-# Checking and reading arguments
-
-if [ $# -ne 1 ] ; then
-	>&2 echo "Usage: ($0) DATABASE_NAME"
-	exit 1
-fi
-
-database="$1"
-
-############################################################
 # Checking whether environment file exists
 
 environment_file="../.env"
@@ -44,6 +34,19 @@ for arg in ${dependencies[@]} ; do
 done
 
 >&2 echo -e "\n${success} All dependencies were met successfully"
+
+############################################################
+# Checking and reading arguments
+
+if [ $# -ne 1 ] ; then
+	read -rp "What is the name of the database to be created? " database
+	if [ -z "$database" ] ; then
+		>&2 echo -e "${error} Database  name cannot be left empty!"
+		exit 1
+	fi
+else
+	database="$1"
+fi
 
 ############################################################
 # Configuring PSQL

@@ -5,16 +5,23 @@ source "$(dirname "$0")/messages"
 print_header="$(dirname "$0")/header_creator/short_header"
 >&2 $print_header
 
-# The following line is everything that must be changed when deploying in the future.
-
-database="davinci"
-uname="${database}_admin"
+############################################################
+# Checking environment file
 
 environment_file="../.env"
 if [ ! -s "$environment_file" ] ; then
 	>&2 echo -e "${error} There is no environment file. Have you installed properly?"
 	exit 1
 fi
+
+############################################################
+# Reading values from environment file
+
+database="$(sed -rn 's/^POSTGRES_DATABASE=(.+)$/\1/p' "$environment_file")"
+uname="$(sed -rn 's/^POSTGRES_USER=(.+)$/\1/p' "$environment_file")"
+
+############################################################
+# Logging into psql
 
 >&2 print_eof << EOF
 To uninstall, ${yellow}you will need to log in to Postgres as a super-user${no_color}. Please type in your password in order to have sudo access.
@@ -24,6 +31,9 @@ sudo -i -u postgres bash << EOF || exit 1
 psql -c "DROP DATABASE $database; " \
 -c "DROP USER $uname; " >&2
 EOF
+
+############################################################
+# Removing environment file
 
 rm "$environment_file"
 echo -e "${done}"
