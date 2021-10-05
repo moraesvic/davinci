@@ -53,9 +53,9 @@ passwd="$(pwgen -s 10 1)"
 host="127.0.0.1"
 port=5432
 
+>&2 print_eof << EOF
 
->&2 cat << EOF
-To run this script, you will need to log in as a super user in PostgreSQL server. \
+To run this script, ${yellow}you will need to log in as a super user${no_color} in PostgreSQL server. \
 Usually, this corresponds to Unix ''postgres'' account. \
 If you are in the sudoers group, it will suffice to type in your account password below.
 EOF

@@ -13,3 +13,8 @@ error="${red}ERROR${no_color}"
 success="${green}SUCCESS${no_color}"
 done="${green}Done${no_color}"
 
+function print_eof {
+    while read -r line ; do
+        echo -e "$line"
+    done < /dev/stdin
+}

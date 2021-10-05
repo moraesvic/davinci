@@ -16,8 +16,8 @@ if [ ! -s "$environment_file" ] ; then
 	exit 1
 fi
 
->&2 cat << EOF
-To uninstall, you will need to log in to Postgres as a super-user. Please type in your password in order to have sudo access.
+>&2 print_eof << EOF
+To uninstall, ${yellow}you will need to log in to Postgres as a super-user${no_color}. Please type in your password in order to have sudo access.
 EOF
 
 sudo -i -u postgres bash << EOF || exit 1
