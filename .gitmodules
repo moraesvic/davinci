@@ -5,6 +5,5 @@
 	path = lib/common
 	url = https://github.com/moraesvic/bash_common
 [submodule "cadmus"]
-	path = install
-	url = https://github.com/moraesvic/cadmus
-	ignore = dirty
+	path = cadmus
+	url = https://github.con/moraesvic/cadmus
