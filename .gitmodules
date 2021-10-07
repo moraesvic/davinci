@@ -7,3 +7,4 @@
 [submodule "cadmus"]
 	path = install
 	url = https://github.com/moraesvic/cadmus
+	ignore = dirty
