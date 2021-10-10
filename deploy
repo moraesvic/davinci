@@ -12,6 +12,12 @@ function list_files {
     find "$1" -maxdepth 1 -type f
 }
 
+function randint {
+    # Generates a random number between [a, b[
+    # Not cryptographically secure, but it doesn't have to be
+    echo $(expr $1 + $RANDOM % $2)
+}
+
 function prompt_yes_no {
 while true ; do
         read -rp "$1 [y/n] " opt
@@ -31,8 +37,7 @@ while true ; do
 }
 
 function is_port_in_use {
-    # if [ -z "$(netstat -an | grep -E "\b$1\b" | grep -i listen)" ] ; then
-    if netstat -an | grep -E "\b$1\b" | grep -iq listen ; then
+    if ! netstat -an | grep -E "\b$1\b" | grep -iq listen ; then
         return 1
     else
         return 0
@@ -45,9 +50,9 @@ function get_free_port {
     #
     # This could have been done without python, for better compatibility,
     # but honestly, today python is everywhere
-    new_port=$(python -c "import random ; print (random.randint(1024,49151))")
+    new_port=$(randint 1024 49152)
     if is_port_in_use "$new_port" ; then
-        echo "$new_port is already in use"
+        >&2 echo "$new_port is already in use"
         get_free_port
     else
         echo "$new_port"
@@ -58,8 +63,7 @@ function check_existing_servers {
     sites_available=0
     # It is usually not recommended to use this configuration, but user
     # might have it. Better to check it.
-    # if [ -n "$(grep "sites-available" /etc/nginx/nginx.conf)" ] ; then
-    if ! grep "sites-available" /etc/nginx/nginx.conf ; then
+    if grep -q "sites-available" /etc/nginx/nginx.conf ; then
         sites_available=$(list_files /etc/nginx/sites-available/ | wc -l)
     fi
     conf_d=$(list_files /etc/nginx/conf.d | wc -l)
@@ -83,7 +87,7 @@ function edit_conf_file {
 
 inject=$(cat "$path_to_script/conf/sub_application.conf")
 
-inject_clean=$(tr '\n\t' ' ') <<< $"inject"
+inject_clean=$(tr '\n\t' ' ') <<< $inject
 
 #########################
 ### WELCOME
@@ -114,7 +118,7 @@ done
 
 ### IS NGINX ACTIVE ?
 
-if [[ ! "$(systemctl is-active nginx)" == "active" ]] ; then
+if ! systemctl is-active -q nginx ; then
     cat << EOF
 nginx is not active in this machine. Please enable it with "sudo systemctl \
 enable nginx && sudo systemctl start nginx". You might have to disable or \
@@ -219,7 +223,7 @@ EOF
     else
 
 ### SUB-APPLICATION
-        port=$(get_free_port)
+        port=$(get_free_port 2> /dev/null)
         cat << EOF
 The last possibility is to host the project as a subdirectory of a main \
 website. Please pick the parent website from the list below.
