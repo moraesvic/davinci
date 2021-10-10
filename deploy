@@ -228,7 +228,7 @@ EOF
 The last possibility is to host the project as a subdirectory of a main \
 website. Please pick the parent website from the list below.
 EOF
-        conf_files=( "$(echo /etc/nginx/conf.d/*)" )
+        conf_files=( $(echo /etc/nginx/conf.d/*) )
         select opt in "${conf_files[@]}" ; do
             if contains_element "$opt" "${conf_files[@]}" ; then
                 break;
