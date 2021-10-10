@@ -186,6 +186,8 @@ function run_as_sole_server {
     echo "In order to make this change, you must be root. Please type in your password."
     sudo -i -u root << EOF || exit 1
 
+source "$path_to_script"/deploy
+
 mkdir /etc/nginx/conf.d.bkp 2> /dev/null
 mkdir /etc/nginx/sites-available.bkp 2> /dev/null
 mkdir /etc/nginx/sites-enabled.bkp 2> /dev/null
@@ -194,9 +196,8 @@ cp /etc/nginx/conf.d/* /etc/nginx/conf.d.bkp
 cp /etc/nginx/sites-available/* /etc/nginx/sites-available.bkp/
 cp /etc/nginx/sites-enabled/* /etc/nginx/sites-enabled.bkp/
 
-cd "$path_to_script" || exit
 edit_conf_file
-cp conf/project.conf "/etc/nginx/conf.d/${project_name}.conf"
+cp "$path_to_script"/conf/project.conf "/etc/nginx/conf.d/${project_name}.conf"
 systemctl restart nginx
 
 EOF
@@ -226,9 +227,10 @@ function multiple_domains {
     echo "In order to configure multiple domains, we need to be root."
     sudo -i -u root << EOF || exit 1
 
-cd "$path_to_script" || exit
+source "$path_to_script"/deploy
+
 edit_conf_file
-cp conf/project.conf "/etc/nginx/conf.d/${project_name}.conf"
+cp "$path_to_script"/conf/project.conf "/etc/nginx/conf.d/${project_name}.conf"
 echo -e "127.0.0.1\t${project_name}.localdev" >> /etc/hosts
 systemctl restart nginx
 
@@ -270,7 +272,7 @@ EOF
     echo "In order to change .conf file, we need to be root."
     sudo -i -u root << EOF || exit 1
 
-cd "$path_to_script" || exit
+source "$path_to_script"/deploy
 sed -ri "/server[[:space:]]+\{/ a $sed_inject" "$opt"
 systemctl restart nginx
 
