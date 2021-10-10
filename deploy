@@ -11,7 +11,7 @@ done
 ### CLONE SUBMODULES
 
 cd "$(dirname "$0")"
-git pull --recurse-submodules
+git submodule update --recursive
 
 ### STARTING INSTALLATION
 
