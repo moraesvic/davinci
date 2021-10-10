@@ -235,8 +235,8 @@ EOF
             fi
         done
 
-        sed_inject=$(sed -r "s/yourproject/${project_name}/ ; \
-            s/yourport/${port}/" <<< "$inject_clean" )
+        sed_inject=$(sed -r "s/yourproject/${project_name}/g ; \
+            s/yourport/${port}/g" <<< "$inject_clean" )
 
         # Changing server .conf file
         echo "In order to change .conf file, we need to be root."
