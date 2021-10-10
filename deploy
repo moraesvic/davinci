@@ -1,0 +1,30 @@
+#!/bin/bash
+
+dependencies=("npm" "psql")
+for arg in "${dependencies[@]}" ; do
+    if [ -z "$(which $arg)" ] ; then
+        echo "It is necessary to have $arg installed to deploy this project. Please install it before continuing."
+        exit 1
+    fi
+done
+
+project_name="davinci"
+
+echo "This project was developed and meant to be deployed at the subdirectory \"$project_name\" of a parent project. The project will be available at the public URL /$project_name . Please ensure that nginx or whatever proxy you might be using is configured properly."
+
+### STARTING INSTALLATION
+
+cd "$(dirname "$0")"
+npm i
+cd "client"
+npm i
+npm run build
+
+### CONFIGURING POSTGRES
+
+cd "../install"
+echo "Now we will configure PostgreSQL. You might need to type in your password. For the database name, anything goes, but it is advised to use the name \"$project_name\" for clarity."
+./install
+
+cd ".."
+echo "Everything should be ready for deployment. Run the server with \"npm run prod\" ."
