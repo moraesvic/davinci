@@ -11,7 +11,7 @@ done
 ### CLONE SUBMODULES
 
 cd "$(dirname "$0")"
-git submodule update --recursive
+git submodule update --init --recursive
 
 ### STARTING INSTALLATION
 
@@ -22,6 +22,7 @@ echo "This project was developed and meant to be deployed at the subdirectory \"
 npm i
 cd "client"
 npm i
+npm audit fix
 npm run build
 
 ### CONFIGURING POSTGRES
