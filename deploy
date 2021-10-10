@@ -87,7 +87,7 @@ function edit_conf_file {
 
 inject=$(cat "$path_to_script/conf/sub_application.conf")
 
-inject_clean=$(tr '\n\t' ' ') <<< $inject
+inject_clean=$(tr '\n\t' ' ' <<< "$inject")
 
 #########################
 ### WELCOME
