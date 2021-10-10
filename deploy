@@ -1,6 +1,6 @@
 #!/bin/bash
 
-dependencies=("npm" "psql")
+dependencies=("git" "npm" "psql")
 for arg in "${dependencies[@]}" ; do
     if [ -z "$(which $arg)" ] ; then
         echo "It is necessary to have $arg installed to deploy this project. Please install it before continuing."
@@ -8,13 +8,17 @@ for arg in "${dependencies[@]}" ; do
     fi
 done
 
+### CLONE SUBMODULES
+
+cd "$(dirname "$0")"
+git pull --recurse-submodules
+
+### STARTING INSTALLATION
+
 project_name="davinci"
 
 echo "This project was developed and meant to be deployed at the subdirectory \"$project_name\" of a parent project. The project will be available at the public URL /$project_name . Please ensure that nginx or whatever proxy you might be using is configured properly."
 
-### STARTING INSTALLATION
-
-cd "$(dirname "$0")"
 npm i
 cd "client"
 npm i
