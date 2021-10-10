@@ -8,9 +8,13 @@ default_port=5000
 
 ### HELPER FUNCTIONS
 
+function list_files {
+    find "$1" -maxdepth 1 -type f
+}
+
 function prompt_yes_no {
 while true ; do
-        read -p "$1 [y/n] " opt
+        read -rp "$1 [y/n] " opt
         case $opt in
             [yY]|yes)
                 return 0
@@ -27,7 +31,8 @@ while true ; do
 }
 
 function is_port_in_use {
-    if [ -z "$(netstat -an | grep -E "\b$1\b" | grep -i listen)" ] ; then
+    # if [ -z "$(netstat -an | grep -E "\b$1\b" | grep -i listen)" ] ; then
+    if netstat -an | grep -E "\b$1\b" | grep -iq listen ; then
         return 1
     else
         return 0
@@ -35,6 +40,11 @@ function is_port_in_use {
 }
 
 function get_free_port {
+    # This will pick a free port in the user-defined range.
+    # Check https://en.wikipedia.org/wiki/List_of_TCP_and_UDP_port_numbers
+    #
+    # This could have been done without python, for better compatibility,
+    # but honestly, today python is everywhere
     new_port=$(python -c "import random ; print (random.randint(1024,49151))")
     if is_port_in_use "$new_port" ; then
         echo "$new_port is already in use"
@@ -48,10 +58,11 @@ function check_existing_servers {
     sites_available=0
     # It is usually not recommended to use this configuration, but user
     # might have it. Better to check it.
-    if [ -n "$(grep "sites-available" /etc/nginx/nginx.conf)" ] ; then
-        sites_available=$(ls -1 /etc/nginx/sites-available/ | wc -l)
+    # if [ -n "$(grep "sites-available" /etc/nginx/nginx.conf)" ] ; then
+    if ! grep "sites-available" /etc/nginx/nginx.conf ; then
+        sites_available=$(list_files /etc/nginx/sites-available/ | wc -l)
     fi
-    conf_d=$(ls -1 /etc/nginx/conf.d | wc -l)
+    conf_d=$(list_files /etc/nginx/conf.d | wc -l)
     echo $((sites_available + conf_d))
 }
 
@@ -64,13 +75,13 @@ function contains_element {
 
 function edit_conf_file {
     filename="$path_to_script/conf/project.conf"
-    sed -ri "s/yourproject/${project_name}/ ; s/yourport/${port}/" conf/project.conf
+    sed -ri "s/yourproject/${project_name}/ ; s/yourport/${port}/" "$filename"
 }
 
 # This excerpt will be injected to user's configuration file if s/he decides
 # to install new app in a subdirectory
 
-inject=$(cat << EOF
+inject=$(cat << 'EOF'
     location = /[yourproject] {
         return 302 /[yourproject]/;
     }
@@ -88,14 +99,25 @@ inject=$(cat << EOF
 EOF
 )
 
-inject_clean=$(tr '\n\t' ' ') <<< $inject
+inject_clean=$(tr '\n\t' ' ') <<< $"inject"
+
+#########################
+### WELCOME
+cat << EOF
+# davinci <https://github.com/moraesvic/davinci>
+# (C) Victor Moraes, 2021 <victor@vulpi-ideas.com>
+# License GPLv3+ <https://gnu.org/licenses/gpl.html>
+
+Welcome and thanks for downloading my project. I will guide you through \
+this installation. It should take 5-10 minutes.
+EOF
 
 #########################
 ### CHECKING DEPENDENCIES
 
 dependencies=("git" "npm" "psql" "nginx" "python")
 for arg in "${dependencies[@]}" ; do
-    if [ -z "$(which $arg)" ] ; then
+    if [ -z "$(command -v "$arg")" ] ; then
         cat << EOF
 
 It is necessary to have $arg installed to deploy this project. Please install
@@ -118,16 +140,26 @@ EOF
 fi
 
 ### CLONE SUBMODULES
+# Cadmus installer is a part of another library, written also by me.
+# In order to effectively have its files, we need to update submodules
+# recursively
 
-cd "$path_to_script"
-# git submodule update --init --recursive
+cd "$path_to_script" || exit
+git submodule update --init --recursive
 
 #########################
 ### DECIDING THE DETAILS OF THE INSTALLATION
+# We have one problem, but many possible solutions. Each user must decide
+# what best suits them. This is just a guideline, experts can do their own
+# configuration.
+# I have tested this script in a virtual machine with Debian, but tried
+# to conform to POSIX as much as possible.
 
 cat << EOF
+
 Now we will decide on the details of the installation. Please pay close \
 attention, as this might change undesired settings from your computer.
+
 EOF
 
 #########################
@@ -151,7 +183,7 @@ EOF
 
 if prompt_yes_no "Do you want to remove existing servers and run $project_name as the sole server on this machine? Previous servers will be backed up to /etc/nginx/conf.d.bkp/" ; then
 
-    port=default_port
+    port=$default_port
 
     echo "In order to make this change, you must be root. Please type in your password."
     sudo -i -u root << EOF || exit 1
@@ -164,9 +196,11 @@ cp /etc/nginx/conf.d/* /etc/nginx/conf.d.bkp
 cp /etc/nginx/sites-available/* /etc/nginx/sites-available.bkp/
 cp /etc/nginx/sites-enabled/* /etc/nginx/sites-enabled.bkp/
 
-cd "$path_to_script"
+cd "$path_to_script" || exit
 edit_conf_file
 cp conf/project.conf "/etc/nginx/conf.d/${project_name}.conf"
+systemctl restart nginx
+
 EOF
     
 ### MULTIPLE DOMAINS OR SUB-APPLICATION ?
@@ -186,15 +220,16 @@ EOF
 
     if prompt_yes_no "Do you want to use multiple domains?" ; then
 
-        port=default_port
+        port=$default_port
 
         echo "In order to configure multiple domains, we need to be root."
         sudo -i -u root << EOF || exit 1
 
-cd "$path_to_script"
+cd "$path_to_script" || exit
 edit_conf_file
 cp conf/project.conf "/etc/nginx/conf.d/${project_name}.conf"
 echo -e "127.0.0.1\t${project_name}.localdev" >> /etc/hosts
+systemctl restart nginx
 
 EOF
     else
@@ -205,23 +240,23 @@ EOF
 The last possibility is to host the project as a subdirectory of a main \
 website. Please pick the parent website from the list below.
 EOF
-        conf_files=( $(echo /etc/nginx/conf.d/*) )
+        conf_files=( "$(echo /etc/nginx/conf.d/*)" )
         select opt in "${conf_files[@]}" ; do
             if contains_element "$opt" "${conf_files[@]}" ; then
-                selected_server="$opt"
                 break;
             fi
         done
+
+        sed_inject=$(sed -r "s/yourproject/${project_name}/ ; \
+            s/yourport/${port}/" <<< "$inject_clean" )
 
         # Changing server .conf file
         echo "In order to change .conf file, we need to be root."
         sudo -i -u root << EOF || exit 1
 
-cd "$path_to_script"
-sed_inject=$(sed -r "s/yourproject/${project_name}/ ; \
-    s/yourport/${port}/" <<< $inject_clean )
-
-sed -ri "/server \{/ a $sed_inject" "$opt"
+cd "$path_to_script" || exit
+sed -ri "/server[[:space:]]+\{/ a $sed_inject" "$opt"
+systemctl restart nginx
 
 EOF
 
@@ -236,16 +271,17 @@ fi
     
 #########################
 ### STARTING INSTALLATION
+# Now that
 
 npm i
-cd "client"
+cd "client" || exit
 npm i
 npm audit fix
 npm run build
 
 ### CONFIGURING POSTGRES
 
-cd "../install"
+cd "../install" || exit
 
 cat << EOF
 
@@ -257,7 +293,7 @@ EOF
 
 ./install
 
-cd ".."
+cd ".." || exit
 cat << EOF
 
 Everything should be ready for deployment. Run the server with \
