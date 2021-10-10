@@ -225,8 +225,10 @@ EOF
 ### SUB-APPLICATION
         port=$(get_free_port 2> /dev/null)
         cat << EOF
+
 The last possibility is to host the project as a subdirectory of a main \
 website. Please pick the parent website from the list below.
+
 EOF
         conf_files=( $(echo /etc/nginx/conf.d/*) )
         select opt in "${conf_files[@]}" ; do
@@ -234,6 +236,16 @@ EOF
                 break;
             fi
         done
+
+        cat << EOF
+
+In order for this setup to work properly, you will need to launch your server \
+from a different port. For that goal, nginx will direct traffic arriving at \
+/$project_name to http://localhost:$port . This will be done by appending a \
+location subdirective in the server block of the main website. For details \
+on that code, check conf/sub_application.conf
+
+EOF
 
         sed_inject=$(sed -r "s/yourproject/${project_name}/g ; \
             s/yourport/${port}/g" <<< "$inject_clean" )
