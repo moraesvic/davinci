@@ -5,7 +5,22 @@ module.exports = function(app){
     /* PRODUCTS */
 	app.get('/products/all', async function(req,res) {
 		let result = await DB.query(
-			"SELECT * FROM products"
+			"SELECT * FROM products;"
+			);
+		if (!result.rows)
+			res.send(Message.genericError);
+		else
+			res.send(result.rows);
+	});
+
+	app.get('/products', async function(req,res) {
+		let result = await DB.query(
+			`
+			SELECT * FROM products
+			WHERE
+				($1::text IS NULL OR prod_name ILIKE '%' || $1::text || '%')
+				AND ($2::bigint IS NULL OR prod_id = $2::bigint);`,
+			[req.query.name, req.query.id]
 			);
 		if (!result.rows)
 			res.send(Message.genericError);
@@ -16,7 +31,7 @@ module.exports = function(app){
 	app.get('/products/:id', async function(req,res) {
 		let result = await DB.query(
 			`SELECT * FROM products
-				WHERE prod_id = $1`,
+				WHERE prod_id = $1;`,
 			[req.params.id]
 			);
 		if (!result.rows)

@@ -32,15 +32,29 @@ console.log(`Currently running in ${mode} mode`);
 
 const IsProductionMode = mode === "production";
 
-if (!IsProductionMode) {
-	/* in production, nginx will serve static files */
-	app.use('/static', express.static('public'));
+/* ROUTERS & API */
+require("./src/api.js")(app);
+
+if (IsProductionMode) {
+    /* Express will serve production assets like main.js
+     * or main.css
+     *
+     * A step even further would be serving these files with
+     * nginx, but that will require additional configuration,
+     * so let's keep things simple for the moment
+     */
+    app.use(express.static('client/build'));
+
+    /* If route is not listed (not part of the API), then
+     * Express will serve the index.html file
+     */
+    app.get("*", (req, res) => {
+        res.sendFile(path.resolve(__dirname, "client", "build", "index.html"));
+    })
+
 }
 
 const PORT = process.env.PORT || 5000;
-
-/* ROUTERS & API */
-require("./src/api.js")(app);
 
 /*
 ################################################################################
@@ -48,9 +62,10 @@ require("./src/api.js")(app);
 ################################################################################
 */
 
-app.use(function(req,res){
-    res.status(404).sendFile(PUBLIC + '404.html');
-});
+// app.use(function(req,res){
+//     console.log(`You are trying to access inexistent resource: ${req.path}`);
+//     res.status(404).sendFile(PUBLIC + '404.html');
+// });
 
 app.listen(PORT, function(req,res){
     console.log('Listening on port ' + PORT + '...');
