@@ -81,23 +81,7 @@ function edit_conf_file {
 # This excerpt will be injected to user's configuration file if s/he decides
 # to install new app in a subdirectory
 
-inject=$(cat << 'EOF'
-    location = /[yourproject] {
-        return 302 /[yourproject]/;
-    }
-
-    location /[yourproject] {
-        proxy_set_header   X-Forwarded-For $remote_addr;
-        proxy_set_header   Host $http_host;
-
-        # Port 5000 was already taken by my other website, so
-        # we picked a random number within the expected range
-        # for user-defined network ports.
-
-        proxy_pass         http://localhost:[yourport]/;
-    }
-EOF
-)
+inject=$(cat "$path_to_script/conf/sub_application.conf")
 
 inject_clean=$(tr '\n\t' ' ') <<< $"inject"
 
