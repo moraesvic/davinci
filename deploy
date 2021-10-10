@@ -3,7 +3,10 @@
 dependencies=("git" "npm" "psql")
 for arg in "${dependencies[@]}" ; do
     if [ -z "$(which $arg)" ] ; then
-        echo "It is necessary to have $arg installed to deploy this project. Please install it before continuing."
+		cat << EOF
+It is necessary to have $arg installed to deploy this project. Please install
+it before continuing.
+EOF
         exit 1
     fi
 done
@@ -17,7 +20,12 @@ git submodule update --init --recursive
 
 project_name="davinci"
 
-echo "This project was developed and meant to be deployed at the subdirectory \"$project_name\" of a parent project. The project will be available at the public URL /$project_name . Please ensure that nginx or whatever proxy you might be using is configured properly."
+cat << EOF
+This project was developed and meant to be deployed at the subdirectory \
+"$project_name" of a parent project. The project will be available at \
+the public URL /$project_name . Please ensure that nginx or whatever proxy \
+you might be using is configured properly.
+EOF
 
 npm i
 cd "client"
@@ -28,8 +36,17 @@ npm run build
 ### CONFIGURING POSTGRES
 
 cd "../install"
-echo "Now we will configure PostgreSQL. You might need to type in your password. For the database name, anything goes, but it is advised to use the name \"$project_name\" for clarity."
+
+cat << EOF
+Now we will configure PostgreSQL. You might need to type in your password. \
+For the database name, anything goes, but it is advised to use the name \
+"$project_name" for clarity.
+EOF
+
 ./install
 
 cd ".."
-echo "Everything should be ready for deployment. Run the server with \"npm run prod\" ."
+cat << EOF
+Everything should be ready for deployment. Run the server with \
+"npm run prod" .
+EOF
