@@ -108,8 +108,8 @@ EOF
 function check_dependencies {
     dependencies=("git" "npm" "psql" "nginx")
     for arg in "${dependencies[@]}" ; do
-        if [[ -z "$(command -v "$arg")" 
-        && ! dpkg -l | grep -iq "$arg" ]] ; then
+        if [ -z "$(command -v "$arg")" ] 
+            && ! dpkg -l | grep -iq "$arg" ; then
             cat << EOF
 
 It is necessary to have $arg installed to deploy this project. Please install
