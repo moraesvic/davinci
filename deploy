@@ -108,6 +108,7 @@ function welcome {
 
 Welcome and thank you for downloading my project. I will guide you through \
 this installation. It should take 5-10 minutes.
+
 EOF
 }
 
@@ -203,7 +204,12 @@ function multi_or_sub {
 All right, none of the previous servers will be touched. \
 Now, nginx can host multiple servers in the same machine. This can be done \
 either by using multiple domains, or by moving an application to a subpath \
-of a primary application. For example, we could keep the main application at \
+of a primary application.
+
+In the first case, you would end up with two locally hosted domains, e.g., \
+http://firstproject.localdev and http://secondproject.localdev 
+
+In the second scenario, we could keep an existing application at \
 http://localhost/ and the new application at http://localhost/${project_name}/
 
 EOF
