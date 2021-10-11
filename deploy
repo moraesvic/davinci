@@ -88,7 +88,7 @@ function contains_element {
 
 function edit_conf_file {
     filename="$path_to_script/conf/project.conf"
-    sed -ri "s/yourproject/${project_name}/ ; s/yourport/${port}/" "$filename"
+    sed -ri "s/yourproject/${project_name}/g ; s/yourport/${port}/g" "$filename"
 }
 
 function warning {
@@ -231,10 +231,8 @@ function multiple_domains {
 
     # Applying changes to .package.json
 
-    sed -ri "s/(.*)(PUBLIC_URL=[^ ]*)(.*)/\1PUBLIC_URL=${project_name}\3/p" \
-        "client/package.json"
-    sed -nr "s/(.*)prod(.*)(PORT=[^ ]*)(.*)/\1prod\2PORT=${port}\4/p" \
-        "package.json"
+    sed -ri "s/^(.*)prod(.*)(PORT=[^ ]*)(.*)$/\1prod\2PORT=${port}\4/g" \
+        "$path_to_script/package.json"
 
     warning "\nAfter finishing, run \"npm run prod\" . Your server can be reached at http://${project_name}.localdev/ (port 80 = standard port for HTTP)"
 
@@ -278,10 +276,10 @@ EOF
 
     # Applying changes to .package.json
 
-    sed -ri "s/(.*)(PUBLIC_URL=[^ ]*)(.*)/\1PUBLIC_URL=${project_name}\3/p" \
-        "client/package.json"
-    sed -nr "s/(.*)prod(.*)(PORT=[^ ]*)(.*)/\1prod\2PORT=${port}\4/p" \
-        "package.json"
+    sed -ri "s/^(.*)(PUBLIC_URL=[^ ]*)(.*)$/\1PUBLIC_URL=${project_name}\3/g" \
+        "$path_to_script/client/package.json"
+    sed -ri "s/^(.*)prod(.*)(PORT=[^ ]*)(.*)$/\1prod\2PORT=${port}\4/g" \
+        "$path_to_script/package.json"
 
     warning "\nAfter finishing, run \"npm run prod\" . Your server can be reached at http://localhost/${project_name} (port 80 = standard port for HTTP)"
 }
