@@ -263,7 +263,8 @@ on that code, check conf/sub_application.conf
 
 EOF
 
-    inject=$(cat "$path_to_script/conf/sub_application.conf")
+    export path_to_script
+    export port
     inject_clean=$(tr '\n\t' ' ' <<< "$inject")
 
     export sed_inject=$(sed -r "s/yourproject/${project_name}/g ; \
