@@ -106,7 +106,7 @@ EOF
 }
 
 function check_dependencies {
-    dependencies=("git" "npm" "psql" "nginx")
+    dependencies=("git" "npm" "psql" "nginx" "pwgen")
     for arg in "${dependencies[@]}" ; do
         if [ -z "$(command -v "$arg")" ] \
             && ! dpkg -l | grep -iq "$arg" ; then
