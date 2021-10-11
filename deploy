@@ -265,10 +265,7 @@ EOF
 
     export path_to_script
     export port
-    inject_clean=$(tr '\n\t' ' ' <<< "$inject")
-
-    export sed_inject=$(sed -r "s/yourproject/${project_name}/g ; \
-        s/yourport/${port}/g" <<< "$inject_clean" )
+    export project_name
     export opt
 
     # Changing server .conf file
