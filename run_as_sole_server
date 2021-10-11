@@ -4,7 +4,9 @@
 dirs=( "/etc/nginx/conf.d" "/etc/nginx/sites-available" "/etc/nginx/sites-enabled")
 for arg in "${dirs[@]}" ; do
     if find "$arg" -type f | read ; then
-        mkdir "$arg.bkp"
+        if [ ! -d "$arg.bkp" ] ; then
+            mkdir "$arg.bkp"
+        fi
         mv "$arg"/* "$arg.bkp/"
     fi
 done
