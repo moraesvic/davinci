@@ -3,7 +3,7 @@
 # Check if directories actually contain anything before trying to move files
 dirs=( "/etc/nginx/conf.d" "/etc/nginx/sites-available" "/etc/nginx/sites-enabled")
 for arg in "${dirs[@]}" ; do
-    if find "$arg" -type f | read ; do
+    if find "$arg" -type f | read ; then
         mkdir "$arg.bkp"
         mv "$arg"/* "$arg.bkp/"
     fi

@@ -112,7 +112,7 @@ function check_dependencies {
             && ! dpkg -l | grep -iq "$arg" ; then
             cat << EOF
 
-It is necessary to have $arg installed to deploy this project. Please install
+It is necessary to have $arg installed to deploy this project. Please install \
 it before continuing.
 
 EOF
