@@ -160,7 +160,6 @@ function installation_wizard {
 
 Now we will decide on the details of the installation. Please pay close \
 attention, as this might change undesired settings from your computer.
-
 EOF
 
     existing_servers=$(check_existing_servers)
@@ -195,7 +194,7 @@ function run_as_sole_server {
     echo "In order to make this change, you must be root. Please type in your password."
     sudo -E "$path_to_script/run_as_sole_server"
 
-    warning "After finishing, run \"npm run prod\" . Your server can be reached at http://localhost (port 80 = standard port for HTTP)"
+    warning "\nAfter finishing, run \"npm run prod\" . Your server can be reached at http://localhost (port 80 = standard port for HTTP)"
 }
 
 function multi_or_sub {
@@ -207,7 +206,7 @@ either by using multiple domains, or by moving an application to a subpath \
 of a primary application.
 
 In the first case, you would end up with two locally hosted domains, e.g., \
-http://firstproject.localdev and http://secondproject.localdev 
+http://firstproject.localdev and http://${project_name}.localdev 
 
 In the second scenario, we could keep an existing application at \
 http://localhost/ and the new application at http://localhost/${project_name}/
@@ -230,7 +229,14 @@ function multiple_domains {
     echo "In order to make this change, you must be root. Please type in your password."
     sudo -E "$path_to_script/multiple_domains"
 
-    warning "After finishing, run \"npm run prod\" . Your server can be reached at http://${project_name}.localdev/ (port 80 = standard port for HTTP)"
+    # Applying changes to .package.json
+
+    sed -ri "s/(.*)(PUBLIC_URL=[^ ]*)(.*)/\1PUBLIC_URL=${project_name}\3/p" \
+        "client/package.json"
+    sed -nr "s/(.*)prod(.*)(PORT=[^ ]*)(.*)/\1prod\2PORT=${port}\4/p" \
+        "package.json"
+
+    warning "\nAfter finishing, run \"npm run prod\" . Your server can be reached at http://${project_name}.localdev/ (port 80 = standard port for HTTP)"
 
 }
 
@@ -277,7 +283,7 @@ EOF
     sed -nr "s/(.*)prod(.*)(PORT=[^ ]*)(.*)/\1prod\2PORT=${port}\4/p" \
         "package.json"
 
-    warning "After finishing, run \"npm run prod\" . Your server can be reached at http://localhost/${project_name} (port 80 = standard port for HTTP)"
+    warning "\nAfter finishing, run \"npm run prod\" . Your server can be reached at http://localhost/${project_name} (port 80 = standard port for HTTP)"
 }
 
 
