@@ -8,7 +8,7 @@
     "server-prod": "NODE_ENV=production nodemon app.js",
     "client": "PORT=3000 BROWSER=none npm run start --prefix client",
     "dev": "concurrently \"npm run server-dev\" \"npm run client\"",
-    "prod": "PORT=37991 NODE_ENV=production nodemon app.js"
+    "prod": "PORT=5000 NODE_ENV=production nodemon app.js"
   },
   "repository": {
     "type": "git",
