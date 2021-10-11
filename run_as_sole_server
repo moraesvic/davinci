@@ -4,10 +4,10 @@ mkdir /etc/nginx/conf.d.bkp 2> /dev/null
 mkdir /etc/nginx/sites-available.bkp 2> /dev/null
 mkdir /etc/nginx/sites-enabled.bkp 2> /dev/null
 
-cp /etc/nginx/conf.d/* /etc/nginx/conf.d.bkp
+cp /etc/nginx/conf.d/* /etc/nginx/conf.d.bkp/
 cp /etc/nginx/sites-available/* /etc/nginx/sites-available.bkp/
 cp /etc/nginx/sites-enabled/* /etc/nginx/sites-enabled.bkp/
 
-sed -ri "s/yourproject/${project_name}/ ; s/yourport/${port}/" "$new_conf_file"
+sed -ri "s/\[yourproject\]/${project_name}/ ; s/\[yourport\]/${port}/" "$new_conf_file"
 cp "$path_to_script"/conf/project.conf "/etc/nginx/conf.d/${project_name}.conf"
 systemctl restart nginx

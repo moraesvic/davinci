@@ -1,0 +1,4 @@
+#!/bin/bash
+
+sed -ri "/server[[:space:]]+\{/ a $sed_inject" "$opt"
+systemctl restart nginx
