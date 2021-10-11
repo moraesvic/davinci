@@ -274,7 +274,7 @@ EOF
 
     # Applying changes to .package.json
 
-    sed -ri "s/^(.*)(PUBLIC_URL=[^ ]*)(.*)$/\1PUBLIC_URL=${project_name}\3/g" \
+    sed -ri "s/^(.*)(PUBLIC_URL=[^ ]*)(.*)$/\1PUBLIC_URL=\/${project_name}\3/g" \
         "$path_to_script/client/package.json"
     sed -ri "s/^(.*)prod(.*)(PORT=[^ ]*)(.*)$/\1prod\2PORT=${port}\4/g" \
         "$path_to_script/package.json"
