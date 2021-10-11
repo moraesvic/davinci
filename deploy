@@ -182,9 +182,9 @@ EOF
 function run_as_sole_server {
 
     port=$default_port
-    files_conf_d=$(list_files /etc/nginx/conf.d)
-    files_sites_available=$(list_files /etc/nginx/sites-available/)
-    files_sites_enabled=$(list_files /etc/nginx/sites-enabled/)
+    files_conf_d=( $(list_files /etc/nginx/conf.d) )
+    files_sites_available=( $(list_files /etc/nginx/sites-available/) )
+    files_sites_enabled=( $(list_files /etc/nginx/sites-enabled/) )
     new_conf_file="$path_to_script/conf/project.conf"
 
     echo "In order to make this change, you must be root. Please type in your password."
