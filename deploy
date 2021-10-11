@@ -91,6 +91,12 @@ function edit_conf_file {
     sed -ri "s/yourproject/${project_name}/ ; s/yourport/${port}/" "$filename"
 }
 
+function warning {
+    >&2 printf "\033[0;33m"
+    >&2 printf "$1"
+    >&2 echo -e "\033[0m"
+}
+
 #########################
 ### SUB-ROUTINES
 
@@ -106,7 +112,7 @@ EOF
 }
 
 function check_dependencies {
-    dependencies=("git" "npm" "psql" "nginx" "pwgen")
+    dependencies=("git" "npm" "psql" "nginx" "pwgen" "python")
     for arg in "${dependencies[@]}" ; do
         if [ -z "$(command -v "$arg")" ] \
             && ! dpkg -l | grep -iq "$arg" ; then
@@ -187,6 +193,8 @@ function run_as_sole_server {
 
     echo "In order to make this change, you must be root. Please type in your password."
     sudo -E "$path_to_script/run_as_sole_server"
+
+    warning "After finishing, run \"npm run prod\" . Your server can be reached at http://localhost (port 80 = standard port for HTTP)"
 }
 
 function multi_or_sub {
@@ -209,14 +217,15 @@ EOF
 
 function multiple_domains {
     export project_name
-    export port=$default_port
+    export port=$(get_free_port 2> /dev/null)
     export path_to_script
     export new_conf_file="$path_to_script/conf/project.conf"
 
     echo "In order to make this change, you must be root. Please type in your password."
     sudo -E "$path_to_script/multiple_domains"
 
-    echo "In order to configure multiple domains, we need to be root."
+    warning "After finishing, run \"npm run prod\" . Your server can be reached at http://${project_name}.localdev/ (port 80 = standard port for HTTP)"
+
 }
 
 function sub_application {
@@ -261,11 +270,20 @@ EOF
         "client/package.json"
     sed -nr "s/(.*)prod(.*)(PORT=[^ ]*)(.*)/\1prod\2PORT=${port}\4/p" \
         "package.json"
+
+    warning "After finishing, run \"npm run prod\" . Your server can be reached at http://localhost/${project_name} (port 80 = standard port for HTTP)"
 }
 
 
 
 function run_installation {
+    cat << EOF
+
+Settings were applied successfully. Now the installation per se begins. Go \
+grab a coffee, it might still take around 5 minutes.
+
+EOF
+
     npm i
     cd "client" || exit
     npm i
