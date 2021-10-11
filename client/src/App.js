@@ -1,12 +1,20 @@
 import logo from './logo.svg';
 import './App.css';
 
+let mode;
+
+if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
+    mode = "development";
+} else {
+    mode = "production";
+}
+
 function App() {
   return (
     <div className="App">
       <header className="App-header">
         <img src={logo} className="App-logo" alt="logo" />
-        <h1>Hello world!</h1>
+        <h1>Hello world! We are running in {mode} mode.</h1>
         <p>
           Edit <code>src/App.js</code> and save to reload.
         </p>

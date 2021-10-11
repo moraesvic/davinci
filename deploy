@@ -192,7 +192,7 @@ function run_as_sole_server {
     export new_conf_file="$path_to_script/conf/project.conf"
 
     echo "In order to make this change, you must be root. Please type in your password."
-    sudo -E "$path_to_script/run_as_sole_server"
+    sudo -E "$path_to_script/conf/run_as_sole_server"
 
     warning "\nAfter finishing, run \"npm run prod\" . Your server can be reached at http://localhost (port 80 = standard port for HTTP)"
 }
@@ -227,7 +227,7 @@ function multiple_domains {
     export new_conf_file="$path_to_script/conf/project.conf"
 
     echo "In order to make this change, you must be root. Please type in your password."
-    sudo -E "$path_to_script/multiple_domains"
+    sudo -E "$path_to_script/conf/multiple_domains"
 
     # Applying changes to .package.json
 
@@ -270,7 +270,7 @@ EOF
 
     # Changing server .conf file
     echo "In order to make this change, you must be root. Please type in your password."
-    sudo -E "$path_to_script/sub_application"
+    sudo -E "$path_to_script/conf/sub_application"
 
     # Applying changes to .package.json
 

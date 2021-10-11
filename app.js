@@ -33,7 +33,7 @@ console.log(`Currently running in ${mode} mode`);
 const IsProductionMode = mode === "production";
 
 /* ROUTERS & API */
-require("./src/api.js")(app);
+require("./api/api.js")(app);
 
 if (IsProductionMode) {
     /* Express will serve production assets like main.js
