@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# This will receive a bunch of binary data and convert it to
+# binary, storing it in /tmp folder of the project, with a timestamp.
+
+# Ideally, we can get rid of old pictures every once in a while.
+
+printf "$1" | xxd -r -p > "../tmp/$(date +"%s_%N").img"

@@ -5,5 +5,6 @@ CREATE TABLE pics (
 	pic_data BYTEA NOT NULL
 
     CHECK (CHAR_LENGTH(pic_orig_name) > 0),
-    CHECK (CHAR_LENGTH(pic_md5) = 16) -- actually, it must be equal to 32, or 16 bytes
+    -- MD5SUM must be equal to 32, or 16 bytes
+    CHECK (CHAR_LENGTH(pic_md5) = 32) 
 );

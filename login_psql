@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+get_env="./lib/bash_common/get_env $(dirname "$0")/.env"
+
+user=$($get_env POSTGRES_USER)
+passwd=$($get_env POSTGRES_PASSWORD)
+host=$($get_env POSTGRES_HOST)
+db=$($get_env POSTGRES_DATABASE)
+port=$($get_env POSTGRES_PORT)
+
+PGPASSWORD="$passwd" psql -U "$user" -h "$host" -d "$db" -p "$port"
+

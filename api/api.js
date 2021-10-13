@@ -1,7 +1,7 @@
 const DB = require("./db");
 const Message = require("./message");
 
-const fs = require('fs');
+const fsPromises = require('fs').promises;
 
 const Multer  = require('multer');
 
@@ -77,7 +77,7 @@ module.exports = function(app){
 	});
 
 	app.post(`/pictures`, async function(req, res){
-		uploadFactory("picture", 1000)(req, res, async function(err) {
+		uploadFactory("picture", 1024 * 1024)(req, res, async function(err) {
 			if (err) {
 				let errCode;
 				errCode = err instanceof Multer.MulterError ?
@@ -90,31 +90,50 @@ module.exports = function(app){
 			}
 
 			try {
+				const fileStatus = req.file;
 
-			} catch {
+				/* Let's process the file, stripping metadata and getting MD5 hash */
+				
+				const chpr = require('./ChildProcess.js');
+				const [pwd, _] = await chpr("pwd -P");
+				console.log(pwd);
+				const [md5sum, stderr] = await chpr(`./api/process_img ${fileStatus.path}`);
+
+				const origName = fileStatus.originalname;
+				const data = await fsPromises.readFile(fileStatus.path)
+				const hexData = data.toString('hex');
+				
+				console.log(`
+				Now we will try to insert data into DB.
+				Original name is ${origName}, md5sum is ${md5sum}, data is binary`);
+
+				let responseDB = await DB.query(`
+					INSERT INTO pics (
+						pic_orig_name,
+						pic_md5,
+						pic_data
+					) VALUES (
+						$1::text,
+						$2::text,
+						$3::bytea
+					);
+					`, [origName, md5sum, hexData]
+				);
+				console.log(responseDB);
+
+				res.send({
+					success: true,
+					message: `Your file was received and named internally as ${fileStatus.filename}`
+				});
+
+			} catch (err) {
+				console.log(err);
 				return res.status(400).send({
 					success: false,
 					code: "FILE_PROCESSING_ERROR"
 				});
 			}
-			const fileStatus = req.file;
 			
-			const origName = fileStatus.originalname;
-			const data = fs.readFileSync(fileStatus.path);
-			const hexData = data.toString('hex');
-			let responseDB = await DB.query(`
-				INSERT INTO test_pics (image)
-				VALUES (
-					$1::bytea
-				);
-				`, [hexData]
-			);
-			console.log(responseDB);
-
-			res.send({
-				success: true,
-				message: `Your file was received and named internally as ${fileStatus.filename}`
-			});
 		})
 
 	});
