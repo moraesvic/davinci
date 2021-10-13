@@ -52,7 +52,7 @@ class DB {
         );
         
         if (!result.rows || !result.rows[0].exists) {
-            console.log("Table `products` was not yet initialized...");
+            console.lowg("Table `products` was not yet initialized...");
 
             const fs = require('fs');
             const path = require('path');

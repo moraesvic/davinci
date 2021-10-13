@@ -1,6 +1,9 @@
 import logo from './logo.svg';
 import './App.css';
 
+import DynLink from './DynLink';
+import FileUpload from './FileUpload';
+
 let mode;
 
 if (!process.env.NODE_ENV || process.env.NODE_ENV === 'development') {
@@ -26,7 +29,14 @@ function App() {
         >
           Learn React
         </a>
-        <a href="/davinci/products/all">See our products (JSON version)</a>
+        <DynLink
+            endpoint="/products/all"
+            text="See our products (JSON version)"
+        />
+        <FileUpload
+            action="/pictures"
+            fieldName="picture"
+        />
       </header>
     </div>
   );
