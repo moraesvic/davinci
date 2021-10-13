@@ -4,38 +4,19 @@ const Message = require("./message");
 const fs = require('fs');
 
 const Multer  = require('multer');
-const upload = Multer({
+
+
+function uploadFactory(filename, sizeLimit)
+{
+	const upload = Multer({
 		dest: 'uploads/',
 		limits:
 			{
-				fileSize: 1000
+				fileSize: sizeLimit
 			}
-});
+	});
 
-function uploadFile(filename) {
-	const middleware = upload.single(filename);
-
-	const wrapper = (req, res) => {
-		middleware(req, res, function (err) {
-			if (err instanceof multer.MulterError) {
-				// A Multer error occurred when uploading.
-			} else if (err) {
-				// An unknown error occurred when uploading.
-			}
-	
-			if (err) {
-				console.log(err);
-				res.send({
-					status: false,
-					message: `An error occurred: ${err.name}`
-				});
-			}
-			// Everything went fine. 
-			next()
-		});
-	}
-
-	return wrapper;
+	return upload.single(filename);
 }
 
 module.exports = function(app){
@@ -95,12 +76,47 @@ module.exports = function(app){
 		res.send("You are here to see pictures");
 	});
 
-	app.post(`/pictures`, uploadFile("picture"), async function(req,res){
-		const fileStatus = console.log(req.body.file)
-		res.send({
-			status: true,
-			message: `Your file was received and named internally as ${fileStatus.filename}`
-		});
+	app.post(`/pictures`, async function(req, res){
+		uploadFactory("picture", 1000)(req, res, async function(err) {
+			if (err) {
+				let errCode;
+				errCode = err instanceof Multer.MulterError ?
+							err.code :
+							"INTERNAL_SERVER_ERROR";
+				return res.status(400).send({
+					success: false,
+					code: errCode
+				});
+			}
+
+			try {
+
+			} catch {
+				return res.status(400).send({
+					success: false,
+					code: "FILE_PROCESSING_ERROR"
+				});
+			}
+			const fileStatus = req.file;
+			
+			const origName = fileStatus.originalname;
+			const data = fs.readFileSync(fileStatus.path);
+			const hexData = data.toString('hex');
+			let responseDB = await DB.query(`
+				INSERT INTO test_pics (image)
+				VALUES (
+					$1::bytea
+				);
+				`, [hexData]
+			);
+			console.log(responseDB);
+
+			res.send({
+				success: true,
+				message: `Your file was received and named internally as ${fileStatus.filename}`
+			});
+		})
+
 	});
 }
 
