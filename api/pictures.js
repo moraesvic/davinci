@@ -12,18 +12,61 @@ function uploadFactory(filename, sizeLimit)
             cb(null, 'uploads/')
         },
         filename: function (req, file, cb) {
-            //Appending extension
-            cb(null, Date.now()
-                + '-' + Math.round(Math.random() * 1E9)
-                + path.extname(file.originalname));
+            const name = Date.now()
+                + '-' + Math.round(Math.random() * 1E9);
+            
+            /* We cannot simply count with original file extension, because
+             * user could simply rename an executable as .jpeg */
+            /*{
+                + path.extname(file.originalname).toLowerCase();
+            }*/
+
+            /* Unix allows up to 255 characters in file names
+             * This does not include path. With path, it can go up to 4096
+             * Anyway, let's leave a fat margin */
+
+            if (name.length > 192)
+                cb("File name is too long!")
+            else
+                cb(null, name);
         }
         
     });
 
+    function checkFileType(file, cb){
+        console.log(file);
+        console.log("MIMETYPE IS" + file.mimetype);
+        
+        
+        // Allowed ext
+        const filetypes = /jpeg|jpg|png|gif/;
+        // Check ext
+        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+
+        /* The implementation for mimetype is wrong. Better to use Unix's "file" later on */
+        /*{
+        
+        // Check mime
+        const mimetype = filetypes.test(file.mimetype);
+
+        }*/
+
+        if(mimetype && extname){
+            return cb(null, true);
+        } else {
+            cb('Error: Images Only!');
+        
+    }
+
 	const upload = Multer({
 		storage: storage,
-        limits:{
+        limits: {
+            /* renamed filename will be checked by fileFilter as well */
+            fieldNameSize: 192,
             fileSize: sizeLimit
+        },
+        fileFilter: function(req, file, cb){
+            checkFileType(file, cb);
         }
 	});
 
@@ -51,8 +94,18 @@ function storePicture(fileStatus)
             return;
         }
         try {
+            /* Get REAL mime-type. Multer's implementation is not correct */
+            /* This will output something like image/png, image/jpeg, text/plain */
+            const [mimetype, _] = await chpr(
+                `file --mime-type "${fileStatus.path}" | sed -rn "s/^.+[[:space:]]+(.*)$/\1/p"`);
+            const [type, subtype] = mimetype.replace("\n" , "").split("/");
+            if (type !== "image")
+            { /* */ }
+            /* rename to extension "subtype" */
+            
             /* Let's process the file, stripping metadata and getting MD5 hash */
-            const [md5sum, _] = await chpr(`./api/process_img "${fileStatus.path}"`);
+            
+            const [md5sum, __] = await chpr(`./api/process_img "${fileStatus.path}"`);
             const origName = fileStatus.originalname;
 
             console.log(`

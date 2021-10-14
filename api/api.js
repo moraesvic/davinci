@@ -67,7 +67,7 @@ module.exports = function(app){
 			);
 		console.log(result);
 		if (result.rows.length === 0)
-			res.send(Message.genericError);
+			res.status(404).send("404 NOT FOUND");
 		else
 			res.sendFile(path.join(app.get('root'), result.rows[0].pic_path));
 	});
