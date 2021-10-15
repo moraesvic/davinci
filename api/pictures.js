@@ -5,6 +5,12 @@ const Multer  = require('multer');
 const DB = require("./db");
 const chpr = require('./ChildProcess.js');
 
+function pad(num, size) {
+    num = num.toString();
+    while (num.length < size) num = "0" + num;
+    return num;
+}
+
 function uploadFactory(filename, sizeLimit)
 {
     const storage = Multer.diskStorage({
@@ -13,13 +19,11 @@ function uploadFactory(filename, sizeLimit)
         },
         filename: function (req, file, cb) {
             const name = Date.now()
-                + '-' + Math.round(Math.random() * 1E9);
+                + '-' + pad(Math.round(Math.random() * 1E9), 9);
             
             /* We cannot simply count with original file extension, because
-             * user could simply rename an executable as .jpeg */
-            /*{
-                + path.extname(file.originalname).toLowerCase();
-            }*/
+             * user could simply rename an executable as .jpeg 
+             * We will deal with this matter outside of Multer middleware */
 
             /* Unix allows up to 255 characters in file names
              * This does not include path. With path, it can go up to 4096
@@ -30,32 +34,11 @@ function uploadFactory(filename, sizeLimit)
             else
                 cb(null, name);
         }
-        
     });
 
     function checkFileType(file, cb){
-        console.log(file);
-        console.log("MIMETYPE IS" + file.mimetype);
-        
-        
-        // Allowed ext
-        const filetypes = /jpeg|jpg|png|gif/;
-        // Check ext
-        const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-
-        /* The implementation for mimetype is wrong. Better to use Unix's "file" later on */
-        /*{
-        
-        // Check mime
-        const mimetype = filetypes.test(file.mimetype);
-
-        }*/
-
-        if(mimetype && extname){
-            return cb(null, true);
-        } else {
-            cb('Error: Images Only!');
-        
+        /* Reserved for future use */
+        return cb(null, true);        
     }
 
 	const upload = Multer({
@@ -85,11 +68,14 @@ function processPicture(req, res, fieldName)
     }); 
 }
 
-function storePicture(fileStatus)
+function storePicture(fileStatus, allowRedundant = true)
 {
+    /* The option allowRedundant will allow a new picture into the database
+     * even if there is already an identical picture.
+     * This can be useful if many products have the same display image */
+
     return new Promise( async (resolve, reject) => {
         if (!fileStatus) {
-            fsPromises.unlink(`${fileStatus.path}`);
             reject();
             return;
         }
@@ -97,29 +83,32 @@ function storePicture(fileStatus)
             /* Get REAL mime-type. Multer's implementation is not correct */
             /* This will output something like image/png, image/jpeg, text/plain */
             const [mimetype, _] = await chpr(
-                `file --mime-type "${fileStatus.path}" | sed -rn "s/^.+[[:space:]]+(.*)$/\1/p"`);
+                `file --mime-type "${fileStatus.path}" | sed -rn "s/^.+[[:space:]]+(.*)$/\\1/p"`);
             const [type, subtype] = mimetype.replace("\n" , "").split("/");
+
             if (type !== "image")
-            { /* */ }
+                throw "This is not an image!";
+            
             /* rename to extension "subtype" */
+            const newPath = `${fileStatus.path}.${subtype.toLowerCase()}`;
+            await fsPromises.rename(fileStatus.path, newPath);
+            fileStatus.path = newPath;
             
             /* Let's process the file, stripping metadata and getting MD5 hash */
             
             const [md5sum, __] = await chpr(`./api/process_img "${fileStatus.path}"`);
             const origName = fileStatus.originalname;
 
-            console.log(`
-            Now we will try to insert data into DB.
-            Original name is ${origName}, md5sum is ${md5sum}, path is ${fileStatus.path}`);
-
-            let isPicAlreadyInDB = await DB.query(`
-            SELECT pic_id FROM pics WHERE pic_md5 = $1 LIMIT 1
-            `, [md5sum]);
-
-            console.log(isPicAlreadyInDB);
-            if (isPicAlreadyInDB.rows.length > 0) {
-                resolve(isPicAlreadyInDB.rows[0].pic_id);
-                return;
+            if (!allowRedundant) {
+                let isPicAlreadyInDB = await DB.query(`
+                SELECT pic_id FROM pics WHERE pic_md5 = $1 LIMIT 1
+                `, [md5sum]);
+    
+                if (isPicAlreadyInDB.rows.length) {
+                    deletePicture({ path: fileStatus.path });
+                    resolve(isPicAlreadyInDB.rows[0].pic_id);
+                    return;
+                }
             }
 
             let responseDB = await DB.query(`
@@ -132,21 +121,45 @@ function storePicture(fileStatus)
                 $2::text,
                 $3::text
             ) RETURNING pic_id;`, [origName, md5sum, fileStatus.path]);
-            console.log(responseDB);
 
             resolve(responseDB.rows[0].pic_id);
 
         } catch (err) {
-
-            console.log(err);
-            fsPromises.unlink(`${fileStatus.path}`);
+            deletePicture({ path: fileStatus.path });
             reject(err);
-
         }
     });
 }
 
+async function deletePicture(kwargs)
+{
+    /* Accepted kwargs are id (pic_id) and path (pic_path) */
+    if (!kwargs)
+        return;
+
+    const {id, path} = kwargs;
+    
+    try {
+        let responseDB = await DB.query(`
+        DELETE FROM pics
+        WHERE
+            ($1::bigint IS NULL OR pic_id = $1::bigint)
+            AND ($2::text IS NULL OR pic_path = $2::text)
+        RETURNING pic_path;`,
+        [ id, path ]);
+    
+        if (responseDB.rows.length)
+            fsPromises.unlink(responseDB.rows[0].pic_path);
+        else if (path)
+            fsPromises.unlink(path);
+    } catch (err) {
+        throw `Failed to delete ${kwargs}`;
+    }
+    
+}
+
 module.exports = {
     processPicture,
-    storePicture
+    storePicture,
+    deletePicture
 };
