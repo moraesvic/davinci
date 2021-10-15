@@ -9,13 +9,14 @@ module.exports = function(app){
 
     /* PRODUCTS */
 	app.get(`/products/all`, async function(req,res) {
-		const offset = req.query.page ?
-						2 * req.query.page :
+		const PRODUCTS_PER_PAGE = 10;
+		const offset = 	req.query.page ?
+						PRODUCTS_PER_PAGE * req.query.page :
 						0;
 		let result = await DB.query(
 			`SELECT * FROM products
 			OFFSET $1
-			LIMIT 2;`,
+			LIMIT ${PRODUCTS_PER_PAGE};`,
 			[offset]);
 		if (!result.rows)
 			res.send(Exceptions.InternalServerError.name);
