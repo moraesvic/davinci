@@ -1,0 +1,43 @@
+
+.nav-bar {
+    position: fixed;
+    top: 0px;
+
+    background-color: black;
+    color: white;
+    
+    font-size: larger;
+
+    text-align: center;
+    align-items: center;
+
+    display: flex;
+    flex-wrap: nowrap;
+
+    margin: 0px;
+}
+
+.nav-bar > * {
+    padding: 3px;
+}
+
+.nav-bar a {
+    color: white;
+    font-style: normal;
+    text-decoration: none;
+}
+
+.nav-bar a:hover {
+    text-decoration: underline;
+}
+
+.nav-title {
+    font-weight: 900;
+    letter-spacing: 2px;
+    margin: 15px;
+}
+
+.nav-item {
+    font-weight: 700;
+    margin: 10px;
+}

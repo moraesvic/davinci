@@ -6,7 +6,7 @@
   "scripts": {
     "server-dev": "nodemon app.js",
     "server-prod": "NODE_ENV=production nodemon app.js",
-    "client": "PORT=3000 BROWSER=none npm run start --prefix client",
+    "client": "npm run start --prefix client",
     "dev": "concurrently \"npm run server-dev\" \"npm run client\"",
     "prod": "cd client && npm run build && cd .. && PORT=37991 NODE_ENV=production nodemon app.js"
   },

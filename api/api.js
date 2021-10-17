@@ -5,18 +5,24 @@ const DB = require("./db");
 const pictures = require("./pictures");
 const Exceptions = require("./exceptions");
 
+require("dotenv").config();
+
 module.exports = function(app){
+	const IsProductionMode = process.env.NODE_ENV === "production";
+	const prefix = IsProductionMode ? "" : process.env.ROOT_PATH;
 
     /* PRODUCTS */
-	app.get(`/products/all`, async function(req,res) {
+	app.get(`${prefix}/list-products`, async function(req,res) {
 		const PRODUCTS_PER_PAGE = 10;
 		const offset = 	req.query.page ?
 						PRODUCTS_PER_PAGE * req.query.page :
 						0;
+		console.log(`path is ${req.path}`);
+		console.log(`offset is ${offset}`);
 		let result = await DB.query(
 			`SELECT * FROM products
-			OFFSET $1
-			LIMIT ${PRODUCTS_PER_PAGE};`,
+			OFFSET $1::bigint
+			LIMIT ${PRODUCTS_PER_PAGE}::bigint;`,
 			[offset]);
 		if (!result.rows)
 			res.send(Exceptions.InternalServerError.name);
@@ -24,7 +30,7 @@ module.exports = function(app){
 			res.send(result.rows);
 	});
 
-	app.get(`/products/count`, async function(req,res) {
+	app.get(`${prefix}/products/count`, async function(req,res) {
 		let result = await DB.query(
 			`SELECT COUNT(*) FROM products;`);
 		if (!result.rows)
@@ -33,7 +39,7 @@ module.exports = function(app){
 			res.send(result.rows[0].count);
 	});
 
-	app.get(`/products`, async function(req,res) {
+	app.get(`${prefix}/products`, async function(req,res) {
 		let result = await DB.query(
 			`
 			SELECT * FROM products
@@ -48,7 +54,7 @@ module.exports = function(app){
 			res.send(result.rows);
 	});
 
-	app.get(`/products/:id`, async function(req,res) {
+	app.get(`${prefix}/products/:id`, async function(req,res) {
 		let result = await DB.query(
 			`SELECT * FROM products
 			WHERE prod_id = $1
@@ -61,7 +67,7 @@ module.exports = function(app){
 			res.send(result.rows[0]);
 	});
 	
-	app.post(`/products`, async function(req,res){
+	app.post(`${prefix}/products`, async function(req,res){
 		let picId = null;
 		try {
 			const fileStatus = await pictures.processPicture(req, res, "picture");
@@ -123,7 +129,7 @@ module.exports = function(app){
 
 	/* PICTURES */
 
-	app.get(`/pictures/:id`, async function(req,res){
+	app.get(`${prefix}/pictures/:id`, async function(req,res){
 		let result = await DB.query(
 			`SELECT * FROM pics
 			WHERE pic_id = $1
@@ -137,7 +143,7 @@ module.exports = function(app){
 			res.sendFile(path.join(app.get('root'), result.rows[0].pic_path));
 	});
 
-	app.delete(`/pictures/all`, async function(req, res){
+	app.delete(`${prefix}/pictures/all`, async function(req, res){
 		let result = await DB.query(`SELECT * FROM pics;`);
 		try {
 			result.rows.forEach( row => pictures.deletePicture({id: row.pic_id}) );
@@ -149,7 +155,7 @@ module.exports = function(app){
 		
 	})
 
-	app.post(`/pictures`, async function(req, res){
+	app.post(`${prefix}/pictures`, async function(req, res){
 		/* This is useful for testing, but is probably not going to be in the final API */
 		try {
 			const fileStatus = await pictures.processPicture(req, res, "picture");

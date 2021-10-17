@@ -1,10 +1,11 @@
 function DynLink(props) {
     // endpoint, text -> <a>
-    let prefix =    (   !  process.env.NODE_ENV
-                        || process.env.NODE_ENV === 'development'
-                    ) ? "" : "/davinci" ;
+    let prefix = process.env.PUBLIC_URL;
+    let endpoint = props.endpoint.slice(0, 1) === "/" ?
+            props.endpoint.slice(1) :
+            props.endpoint;
     return (
-        <a href={`${prefix}${props.endpoint}`}>{props.text}</a>
+        <a href={`${prefix}/${endpoint}`}>{props.text}</a>
     );
 }
 

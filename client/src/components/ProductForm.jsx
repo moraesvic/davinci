@@ -15,7 +15,7 @@ function productForm(props) {
 
     return (
         <form 
-            action={action}
+            action={`${process.env.PUBLIC_URL}/${action}`}
             method={method}
             enctype="multipart/form-data">
         <table className="center">
