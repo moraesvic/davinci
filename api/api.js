@@ -130,6 +130,42 @@ module.exports = function(app){
 		}
 	});
 
+	app.delete(`${prefix}/products/all`, async function(req, res){
+		let result = await DB.query(`
+		SELECT prod_id, prod_img
+		FROM products;`
+		);
+		console.log(result);
+
+		try {
+			/* first, delete the pictures */
+			let picsSet = new Set();
+			for (let i = 0; i < result.rows.length; i++) {
+				let picId = result.rows[i].prod_img;
+				if (picId)
+					picsSet.add(picId);
+			}
+			for (let pic of picsSet)
+				pictures.deletePicture({id: pic});
+
+			await DB.query(`
+			DELETE FROM products;
+			`);
+
+			let delPics = await DB.query(`
+			DELETE FROM pics
+			RETURNING pic_id;
+			`);
+			
+			res.send(`deleted ${picsSet.size + delPics.rows.length} pictures and ${result.rows.length} products`);
+
+		} catch (err) {
+			console.log(err);
+			res.send(`failed to delete all products`);
+		}
+		
+	});
+
 	/* PICTURES */
 
 	app.get(`${prefix}/pictures/:id`, async function(req,res){
@@ -156,7 +192,7 @@ module.exports = function(app){
 			res.send(`failed to delete all pictures`);
 		}
 		
-	})
+	});
 
 	app.post(`${prefix}/pictures`, async function(req, res){
 		/* This is useful for testing, but is probably not going to be in the final API */
