@@ -1,5 +1,6 @@
 import React from 'react';
 import './styles.css';
+import "./ProductForm.css";
 
 function ProductForm(props) {
     
@@ -8,23 +9,32 @@ function ProductForm(props) {
 
     const fieldName = props.fieldName || "file";
 
-    let data = new FormData();
+    let formDict = {};
 
     const handleChange = (event) => {
       const name = event.target.name;
       const value = event.target.value;
-      data.append(name, value);
+      formDict[name] = value;
     }
 
     const handleFile = (e) => {
+        const MAX_FILE_SIZE = 5 * 1024 * 1024 ; // 5 megabytes
         const file = e.target.files[0];
-        console.log(`file is ${file}`);
-        data.append(`${fieldName}`, file);
+        if (file.size > MAX_FILE_SIZE) {
+            alert("Your file is too large! We accept up to 5 megabytes.")
+            return;
+        }
+        formDict[`${fieldName}`] = file;
     }
   
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        let data = new FormData();
+        for (let [key, value] of Object.entries(formDict))
+            data.append(key, value);
         console.log(data);
+
         const action = `${process.env.PUBLIC_URL}/${props.action}`.replace(/\/\//g, "/");
         const method = props.method || "POST";
         const ret = await fetch(
@@ -40,7 +50,7 @@ function ProductForm(props) {
         console.log(`parsed is`);
         console.log(parsed);
         if (!parsed.success) {
-            alert("response indicates failure...");
+            alert("response indicates failure...");            
             return;
         }
         alert(`request succeeded! picture id is ${parsed.picId}`);
@@ -48,6 +58,8 @@ function ProductForm(props) {
     }
 
     return (
+        <div className="product-form">
+        <h1>Enter a new product!</h1>
         <form 
         onSubmit={handleSubmit}>
         <table className="center">
@@ -75,6 +87,8 @@ function ProductForm(props) {
             <td>
                 <input type="number"
                 name="prodPrice"
+                min="0.01"
+                step="0.01"
                 onChange={handleChange}
                 />
             </td>
@@ -84,27 +98,44 @@ function ProductForm(props) {
             <td>
                 <input type="number"
                 name="prodInStock"
+                min="0"
+                step="1"
                 onChange={handleChange}
                 />
             </td>
         </tr>
         <tr>
-            <td>Choose an image</td>
             <td>
+                Product image<br/>
+                <span className="small">
+                    (up to 5 MiB)
+                </span>
+            </td>
+            <td>
+                <label for="file-upload" className="form-button" type="button">
+                    Choose file
+                </label>
                 <input type="file"
                 name={fieldName}
                 onChange={handleFile}
+                accept="image/*"
+                id="file-upload"
                 />
             </td>
         </tr>
         <tr>
-            <td>
-                <button type="submit">Submit</button>
+            <td colspan="2">
+                <button
+                type="submit"
+                className="submit-button">
+                    Submit
+                </button>
             </td>
         </tr>
         </tbody>
         </table>
         </form>
+        </div>
     );
 }
 

@@ -1,0 +1,40 @@
+.small {
+    font-size: small;
+}
+
+.form-button {
+    background-color: black;
+    color: white;
+    font-weight: 900;
+
+    padding: 3px;
+    margin: 2px;
+    border-width: 2px;
+    border-style: outset;
+    border-color: rgb(118, 118, 118), rgb(133, 133, 133);
+}
+
+.submit-button {
+    background-color: green;
+    color: lightgrey;
+    font-weight: 900;
+    font-size: larger;
+
+    padding: 10px;
+    border-radius: 5px;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+tr, td {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 5px;
+}
+
+.product-form {
+    margin: auto;
+    text-align: center;
+}

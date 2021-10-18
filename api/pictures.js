@@ -59,7 +59,8 @@ function uploadFactory(filename, sizeLimit)
 function processPicture(req, res, fieldName)
 {
     return new Promise( (resolve, reject) => {
-        uploadFactory(fieldName, 1024 * 1024)(req, res, async function(err) {
+        const MAX_FILE_SIZE = 5 * 1024 * 1024 ; // 5 megabytes
+        uploadFactory(fieldName, MAX_FILE_SIZE)(req, res, async function(err) {
             if (err)
                 reject(err);
             else

@@ -1,6 +1,9 @@
+import "./App.css";
+
 import NavBar from "./NavBar";
 import ProductForm from './ProductForm';
 import MainContent from './MainContent';
+import Footer from "./Footer";
 
 const dropdowns = 
   [
@@ -14,10 +17,14 @@ function App() {
         <NavBar dropdowns={dropdowns} title="DA VINCI" />
         <MainContent />
         <hr />
-        <h1>Enter a new product!</h1>
         <ProductForm
             action="/products"
             fieldName="picture"
+        />
+        <Footer 
+            author="Victor Moraes"
+            madeWith="☕"
+            gitHub="https://github.com/moraesvic/davinci"
         />
     </div>
   );
