@@ -1,6 +1,6 @@
 import NavBar from "./NavBar";
 import ProductForm from './ProductForm';
-import Products from './Products';
+import MainContent from './MainContent';
 
 const dropdowns = 
   [
@@ -12,9 +12,8 @@ function App() {
   return (
     <div className="App">
         <NavBar dropdowns={dropdowns} title="DA VINCI" />
-        <Products />
+        <MainContent />
         <hr />
-        dot env is ... {process.env.PUBLIC_URL}
         <h1>Enter a new product!</h1>
         <ProductForm
             action="/products"

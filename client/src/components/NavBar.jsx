@@ -9,16 +9,18 @@ function NavBar(props) {
     */
     if (!props.dropdowns || !props.title)
         return (null);
+
+    let dropdownIndex = 0;
     
     return (
-    <nav class="nav-bar">
+    <nav className="nav-bar">
     
-        <div class="nav-title">
+        <div className="nav-title">
             <DynLink endpoint="/" text={props.title} />
         </div>
         { props.dropdowns.map( dropdown => {
             return (
-                <div class="nav-item">
+                <div className="nav-item" key={`nav-item-${dropdownIndex++}`}>
                     <DynLink endpoint={dropdown.endpoint} text={dropdown.title} />
                 </div>
             );

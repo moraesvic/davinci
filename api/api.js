@@ -9,6 +9,9 @@ require("dotenv").config();
 
 module.exports = function(app){
 	const IsProductionMode = process.env.NODE_ENV === "production";
+
+	/* In production mode, there is no need for a prefix, as Nginx will
+		proxy connections to :80/davinci to :37991/ */
 	const prefix = IsProductionMode ? "" : process.env.ROOT_PATH;
 
     /* PRODUCTS */
@@ -68,6 +71,7 @@ module.exports = function(app){
 	});
 	
 	app.post(`${prefix}/products`, async function(req,res){
+		console.log("Received POST request at /products");
 		let picId = null;
 		try {
 			const fileStatus = await pictures.processPicture(req, res, "picture");
@@ -105,7 +109,9 @@ module.exports = function(app){
 				let responseDB = await DB.query(query, [
 					prodName, prodDescr, picId, prodPrice, prodInStock
 				]);
-			} catch {
+			} catch (err) {
+				console.log("Error doing DB query");
+				console.log(err);
 				throw Exceptions.InvalidInput;
 			}
 

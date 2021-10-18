@@ -15,7 +15,7 @@ function post_product {
 		-F "prodDescr=$2" \
 		-F "prodPrice=$3" \
 		-F "prodInStock=$4" \
-		localhost:3000/products
+		localhost:3000/davinci/products
 }
 
 # Test 1 : playing nice and supplying all fields

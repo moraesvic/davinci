@@ -3,11 +3,26 @@ import React from 'react';
 import * as Fetch from '../js/fetch';
 import "./Products.css";
 
-function Image(props)
-{    
-    return props.id ?
-        <img src={`/pictures/${props.id}`} alt={props.alt} className="prod-img"/> :
-        <img src={require('../img/no-icon.png').default} alt={props.alt} className="prod-img"/>;
+import Image from "./Image";
+
+function trim(text)
+{
+    /* According to experiments, that is the longest text that would fit into
+    the box. That is also a half-tweet */
+    const MAX_LENGTH = 140;
+    let trimmed;
+
+    if (text.length > MAX_LENGTH)
+    {
+        let arr = text.split(" ");
+        while ((arr.join(" ") + " (...)").length > MAX_LENGTH)
+            arr.splice(arr.length - 1);
+        trimmed = arr.join(" ") + " (...)";
+    }
+    else
+        trimmed = text;
+
+    return trimmed;
 }
 
 function ProductList(props)
@@ -16,32 +31,42 @@ function ProductList(props)
 
     React.useEffect(() => {
         const wrapper = async () => {
-            const response = await Fetch.get(`/products/all?page=${props.page}`);
+            const response = await Fetch.get(`/list-products?page=${props.page}`);
             setProducts(response);
         }
         wrapper();
     }, [props.page]);
 
+    const classList = ["blue", "yellow", "green", "red"];
+    let keyIndex = 0;
+
+    
+
     return (
-        <table>
-        { products.map(prod => 
-            <div key={prod.prod_id}>
-                <tr>
-                    <th>
-                        <h2>{prod.prod_name}</h2>
-                    </th>
-                    <th>
-                        <h3>{(prod.prod_price / 100).toFixed(2)} $</h3>
-                        <h4>In stock: {prod.prod_instock}</h4>
-                    </th>
-                </tr>
-                <tr>
-                    <td>{prod.prod_descr}</td>
-                    <td><Image id={prod.prod_img} alt={prod.prod_descr}/></td>
-                </tr>
+        <section className="flex-container">
+        { products.map(prod => {
+            const description = prod.prod_descr.length === 0 ?
+                "No description available." :
+                trim(prod.prod_descr);
+            
+            const price = (prod.prod_price / 100).toFixed(2);
+            return (
+            <div
+            className={`card ${classList[keyIndex % classList.length]}`}
+            key={keyIndex++}>
+                <div className="center">
+                    <div className="pic-box">
+                        <Image id={prod.prod_img} alt={prod.prod_descr} />
+                    </div>
+                    <p className="card-title">
+                        {prod.prod_name} | $ {price}
+                    </p>
+                </div>
+                <p className="card-descr">{description}</p>
             </div>
-        ) }
-        </table>
+            );
+        }) }
+        </section>
     );
 }
 
@@ -61,6 +86,7 @@ function Products(props)
 
     /* */
 
+    const CARDS_PER_PAGE = 10;
     const [currentPage, setCurrentPage] = React.useState(0);
 
     function decreasePage()
@@ -71,20 +97,58 @@ function Products(props)
 
     function increasePage()
     {
-        if (currentPage < count / 2)
+        if (currentPage + 1 < count / CARDS_PER_PAGE)
             setCurrentPage(currentPage + 1);
     }
 
     /* */
 
+    function DecreasePageButton()
+    {
+        return currentPage > 0 ?
+            <button className="pager-button" onClick={decreasePage}>← Previous page</button> :
+            (null);
+    }
+
+    function IncreasePageButton()
+    {
+        return currentPage + 1 < count / CARDS_PER_PAGE ?
+            <button className="pager-button" onClick={increasePage}>Next page →</button> :
+            (null);
+    }
+
+    function PagerButtons()
+    {
+        const decreaseButton = DecreasePageButton();
+        const increaseButton = IncreasePageButton();
+        const separator = decreaseButton && increaseButton ?
+            <span> &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </span> :
+            (null);
+        return (
+        <div>
+            {decreaseButton}
+            {separator}
+            {increaseButton}
+        </div>
+        )
+    }
+
     function Pager(props)
     {
+        const pageStart = count === 0 ?
+                    0 : currentPage * CARDS_PER_PAGE + 1;
+        const pageEnd = (currentPage + 1) * CARDS_PER_PAGE < count ?
+                    (currentPage + 1) * CARDS_PER_PAGE : 
+                    count;
         return (
-            <div>
-                <p>Total products: {count}</p>
-                <p>Current page: {currentPage}</p>
-                <button onClick={decreasePage}>&lt;</button>
-                <button onClick={increasePage}>&gt;</button>
+            <div className="center buffer">
+                <p className="listing-products">
+                    Listing products {pageStart} to {pageEnd}
+                </p>
+                <p className="listing-total">
+                    from a total of {count}
+                </p>
+                {PagerButtons()}
             </div>
         )
     }
@@ -93,6 +157,7 @@ function Products(props)
         <div>
         <Pager maxCount={count} />
         <ProductList page={currentPage} />
+        <Pager maxCount={count} />
         </div>
     );
 }

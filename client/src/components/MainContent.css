@@ -1,0 +1,42 @@
+/* Bootstrap grid sizes, for reference only. This project does not use Bootstrap
+
+xl >= 1200px
+lg >=  992px
+md >=  768px
+sm >=  576px
+xs <   576px
+
+*/
+
+/* The default value will only apply when width > 1200px */
+.main-content {
+    margin: 80px 6% 5px;
+}
+
+@media (max-width: 1200px)
+{
+    .main-content {
+        margin: 80px 6% 5px;
+    }
+}
+
+@media (max-width: 992px)
+{
+    .main-content {
+        margin: 80px 4% 5px;
+    }
+}
+
+@media (max-width: 768px)
+{
+    .main-content {
+        margin: 80px 2% 5px;
+    }
+}
+
+@media (max-width: 520px)
+{
+    .main-content {
+        margin: 80px 0px 5px;
+    }
+}

@@ -33,7 +33,7 @@ async function HTTPRequest(url, path, payload, query, method)
 	checkType(path, payload, query);
 
 	let prefix = process.env.PUBLIC_URL;
-	let newUrl = `${prefix}/${url}`;
+	let newUrl = `${prefix}/${url}`.replace(/\/\//g,'/');
 	
 	if (path)
 		for (let subpath of path)
