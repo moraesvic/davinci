@@ -1,0 +1,6 @@
+-- allow client/.env to be synchronized with git
+-- start with a random index for the cards in Products
+-- change meta -> description and favicon.ico
+-- apply easter egg in main branch
+-- change SQL file
+-- documentation
