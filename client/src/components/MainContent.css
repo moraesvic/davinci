@@ -40,3 +40,7 @@ xs <   576px
         margin: 80px 0px 5px;
     }
 }
+
+.center {
+    text-align: center;
+}

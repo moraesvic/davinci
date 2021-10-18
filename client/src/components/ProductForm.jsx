@@ -19,9 +19,10 @@ function ProductForm(props) {
 
     const handleFile = (e) => {
         const MAX_FILE_SIZE = 5 * 1024 * 1024 ; // 5 megabytes
+        const maxFileSizeMB = Math.round(MAX_FILE_SIZE / 1024 / 1024);
         const file = e.target.files[0];
         if (file.size > MAX_FILE_SIZE) {
-            alert("Your file is too large! We accept up to 5 megabytes.")
+            alert(`Your file is too large! We accept up to ${maxFileSizeMB} megabytes.`)
             return;
         }
         formDict[`${fieldName}`] = file;
@@ -33,7 +34,6 @@ function ProductForm(props) {
         let data = new FormData();
         for (let [key, value] of Object.entries(formDict))
             data.append(key, value);
-        console.log(data);
 
         const action = `${process.env.PUBLIC_URL}/${props.action}`.replace(/\/\//g, "/");
         const method = props.method || "POST";
@@ -43,18 +43,19 @@ function ProductForm(props) {
                 body: data,
         });
         if (!ret) {
-            alert("response inexistent!")
+            alert("Internal server error. We apologize for the inconvenience.");
+            window.location.reload();
             return;
         }
         const parsed = await ret.json();
-        console.log(`parsed is`);
-        console.log(parsed);
         if (!parsed.success) {
-            alert("response indicates failure...");            
+            alert("Error processing request. Please assure you have sent an image within the maximum size.");
+            window.location.reload();          
             return;
         }
-        alert(`request succeeded! picture id is ${parsed.picId}`);
-             
+        alert(`Request succeeded!`);
+        const viewPage = `${process.env.PUBLIC_URL}/view`.replace(/\/\//g, "/");
+        window.location.pathname = viewPage;
     }
 
     return (
@@ -65,28 +66,37 @@ function ProductForm(props) {
         <table className="center">
         <tbody>
         <tr>
-            <td>Product name</td>
+            <td>
+                <label htmlFor="prodName">Product name</label>
+            </td>
             <td>
                 <input type="text"
                 name="prodName"
+                id="prodName"
                 onChange={handleChange}
                 required
                 />
             </td>
         </tr>
         <tr>
-            <td>Product description</td>
+            <td>
+                <label htmlFor="prodDescr">Product description</label>
+            </td>
             <td>
                 <textarea
                 name="prodDescr"
+                id="prodDescr"
                 onChange={handleChange} />
             </td>
         </tr>
         <tr>
-            <td>Price</td>
+            <td>
+                <label htmlFor="prodPrice">Price</label>
+            </td>
             <td>
                 <input type="number"
                 name="prodPrice"
+                id="prodPrice"
                 min="0.01"
                 step="0.01"
                 onChange={handleChange}
@@ -94,10 +104,13 @@ function ProductForm(props) {
             </td>
         </tr>
         <tr>
-            <td>How many do you have in stock?</td>
+            <td>
+                <label htmlFor="prodInStock">How many in stock?</label>
+            </td>
             <td>
                 <input type="number"
                 name="prodInStock"
+                id="prodInStock"
                 min="0"
                 step="1"
                 onChange={handleChange}
@@ -112,7 +125,7 @@ function ProductForm(props) {
                 </span>
             </td>
             <td>
-                <label for="file-upload" className="form-button" type="button">
+                <label htmlFor="file-upload" className="form-button" type="button">
                     Choose file
                 </label>
                 <input type="file"
@@ -124,7 +137,7 @@ function ProductForm(props) {
             </td>
         </tr>
         <tr>
-            <td colspan="2">
+            <td colSpan="2">
                 <button
                 type="submit"
                 className="submit-button">

@@ -20,8 +20,7 @@ module.exports = function(app){
 		const offset = 	req.query.page ?
 						PRODUCTS_PER_PAGE * req.query.page :
 						0;
-		console.log(`path is ${req.path}`);
-		console.log(`offset is ${offset}`);
+
 		let result = await DB.query(
 			`SELECT * FROM products
 			OFFSET $1::bigint
@@ -71,7 +70,6 @@ module.exports = function(app){
 	});
 	
 	app.post(`${prefix}/products`, async function(req,res){
-		console.log("Received POST request at /products");
 		let picId = null;
 		try {
 			const fileStatus = await pictures.processPicture(req, res, "picture");
@@ -82,7 +80,6 @@ module.exports = function(app){
 			/* req.body is only populated after Multer runs. Which is unfortunate,
 			 * because we would be able to reduce server load by not processing
 			 * pictures if the rest of the form presents a bad request */
-			console.log(req.body);
 
 			const prodName = req.body.prodName,
 				prodDescr = req.body.prodDescr,
