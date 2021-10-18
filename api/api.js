@@ -81,6 +81,8 @@ module.exports = function(app){
 			 * because we would be able to reduce server load by not processing
 			 * pictures if the rest of the form presents a bad request */
 
+			console.log(req.body);
+			console.log(req.file);
 			const prodName = req.body.prodName,
 				prodDescr = req.body.prodDescr,
 				prodPrice = Math.floor ( parseFloat(req.body.prodPrice) * 100),
