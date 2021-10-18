@@ -3,7 +3,7 @@
 get_env="./lib/bash_common/get_env $(dirname "$0")/client/.env"
 
 public_url=$($get_env PUBLIC_URL)
-host="vulpi-davinci.localdev"
+host="vulpi-ideas.com"
 url="$host/$public_url/products"
 url="http://${url/\/\//\/}"
 
@@ -87,5 +87,8 @@ post_product "brush-collection.jpg" \
     "Some fine brushes made with sable fur. Just joking, it is all vegan!" \
     "179.89" \
     "3"
+
+# Wait so we respect the rate limit
+sleep 10
 
 done
