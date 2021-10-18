@@ -1,7 +1,0 @@
-#!/bin/bash
-
-sed -ri "/server[[:space:]]+\{/r"<(sed -r \
-    "s/\[yourproject\]/${project_name}/g ; s/\[yourport\]/${port}/g" \
-    "$path_to_script/conf/sub_application.conf") \
-    "$opt"
-systemctl restart nginx
