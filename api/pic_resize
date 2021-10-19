@@ -9,7 +9,7 @@ dir_name="$(dirname "$0")"
 # This is the maximum number of pixels we will accept, either width
 # or height. If picture is larger, it will be reduced proportionally
 
-max_resolution_px=800
+max_resolution_px=600
 
 ############################################################
 # CHECK SANITY OF INPUT
