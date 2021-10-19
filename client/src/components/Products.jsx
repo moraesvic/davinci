@@ -38,9 +38,7 @@ function ProductList(props)
     }, [props.page]);
 
     const classList = ["blue", "yellow", "green", "red"];
-    let keyIndex = 0;
-
-    
+    let keyIndex = Math.floor ( Math.random() * classList.length );    
 
     return (
         <section className="flex-container">
