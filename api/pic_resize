@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+
+############################################################
+# DEFINITIONS
+
+program_name="$(basename "$0")"
+dir_name="$(dirname "$0")"
+
+# This is the maximum number of pixels we will accept, either width
+# or height. If picture is larger, it will be reduced proportionally
+
+max_resolution_px=800
+
+############################################################
+# CHECK SANITY OF INPUT
+
+function die {
+	>&2 echo "$program_name : $1"
+	exit 1
+}
+
+if [ $# -ne 1 ] ; then
+	die "must be run with file argument"
+fi
+
+src_full_path="$1"
+
+if [ ! -f "$src_full_path" \
+	-o -z "$(file "$src_full_path" | grep image)" ] ; then
+	die "$src_full_path is not an image file"
+fi
+
+# Let's get current resolution
+# "file" command apparently does not work for all image types
+#
+# See https://superuser.com/questions/275502/how-to-get-information-about-an-image-picture-from-the-linux-command-line
+#
+# So we will have to use exiftool, which is not ideal, because it
+# loads entire file. But it will stay for lack of a better
+# alternative
+
+resolution="$(exiftool "$src_full_path" 2> /dev/null | \
+	sed -rn "s/^Image Size[^0-9]*([0-9]+x[0-9]+)$/\1/p")"
+
+>&2 echo "File $src_full_path"
+>&2 echo "Image resolution is $resolution"
+
+# Now we will go to Python script. I would like to have a single
+# file and less dependencies but Bash is really not suited for
+# more complex stuff
+
+proportion=$($dir_name/find_proportion.py "$resolution" "$max_resolution_px")
+>&2 echo "Dimensions must be reduced to $proportion % of original (in both axes)"
+
+if [ $proportion = "100" ] ; then
+	>&2 echo "Nothing to do here"
+	exit 0
+fi
+
+# We will just overwrite the file. For a more sophisticated treatment,
+# refer to https://github.com/moraesvic/pic_resize
+
+convert -resize "${proportion}%" "$src_full_path" "$src_full_path"

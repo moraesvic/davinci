@@ -97,7 +97,8 @@ function storePicture(fileStatus, allowRedundant = true)
             
             /* Let's process the file, stripping metadata and getting MD5 hash */
             
-            const [md5sum, __] = await chpr(`./api/process_img "${fileStatus.path}"`);
+            const [md5sum, stderr] = await chpr(`./api/process_img "${fileStatus.path}"`);
+            console.log(stderr);
             const origName = fileStatus.originalname;
 
             if (!allowRedundant) {
