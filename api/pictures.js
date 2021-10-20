@@ -191,7 +191,9 @@ async function resizePic(path, maxSize, convertToJPEG = true, benchmark = true)
 {
     /* Will always overwrite original */
     /* Please note that sometimes JPEG can be larger than PNG,
-     * this is not a bug, although it is annoying */
+     * this is not a bug, although it is annoying
+     * https://stackoverflow.com/questions/43970574/my-jpg-file-is-larger-than-png
+     * */
 
     /* Another weird fact is that sometimes shrinking resolution can make
      * a file have a larger size. This is due to how compression operates
