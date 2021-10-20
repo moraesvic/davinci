@@ -90,7 +90,7 @@ module.exports = function(app){
 			INSERT INTO products (
 				prod_name,
 				prod_descr,
-				prod_img,
+				pic_id,
 				prod_price,
 				prod_instock
 			) VALUES (
@@ -121,7 +121,7 @@ module.exports = function(app){
 
 			/* In case picture was already saved, we need to delete it */
 			if (picId)
-					pictures.deletePicture({ id: picId });
+					pictures.decreaseRefCount(picId);
 						
 			return res.status(400).send({
 				success: false,
@@ -132,7 +132,7 @@ module.exports = function(app){
 
 	app.delete(`${prefix}/products/all`, async function(req, res){
 		let result = await DB.query(`
-		SELECT prod_id, prod_img
+		SELECT prod_id, pic_id
 		FROM products;`
 		);
 		console.log(result);
@@ -141,7 +141,7 @@ module.exports = function(app){
 			/* first, delete the pictures */
 			let picsSet = new Set();
 			for (let i = 0; i < result.rows.length; i++) {
-				let picId = result.rows[i].prod_img;
+				let picId = result.rows[i].pic_id;
 				if (picId)
 					picsSet.add(picId);
 			}

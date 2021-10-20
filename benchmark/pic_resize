@@ -5,6 +5,7 @@ After running populate_db :
 	max 600 px + jpeg	: 2.8 M
 	checking every op	: 2.5 M
 	same, 300px			: 1.2 M
+	checking md5sum		: 232 K
 
 Remember : it is not so important to reduce image size **in the server**,
 but to make pages load faster.

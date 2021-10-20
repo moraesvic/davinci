@@ -6,3 +6,4 @@
 -- documentation
 
 -- redo installer
+-- check if dir "uploads/" exists, if not, create

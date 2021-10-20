@@ -367,13 +367,14 @@ async function deletePicture(kwargs)
         WHERE
             ($1::bigint IS NULL OR pic_id = $1::bigint)
             AND ($2::text IS NULL OR pic_path = $2::text)
-        RETURNING pic_path;`,
+        RETURNING pic_path ; `,
         [ id, path ]);
     
         if (responseDB.rows.length)
-            fsPromises.unlink(responseDB.rows[0].pic_path);
+            await fsPromises.unlink(responseDB.rows[0].pic_path);
         else if (path)
-            fsPromises.unlink(path);
+            await fsPromises.unlink(path);
+
     } catch (err) {
         throw `Failed to delete ${kwargs}`;
     }
@@ -383,5 +384,6 @@ async function deletePicture(kwargs)
 module.exports = {
     processPicture,
     storePicture,
-    deletePicture
+    deletePicture,
+    decreaseRefCount
 };

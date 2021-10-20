@@ -54,7 +54,7 @@ function ProductList(props)
             key={keyIndex++}>
                 <div className="center">
                     <div className="pic-box">
-                        <Image id={prod.prod_img} alt={prod.prod_descr} />
+                        <Image id={prod.pic_id} alt={prod.prod_descr} />
                     </div>
                     <p className="card-title">
                         {prod.prod_name} | $ {price}
