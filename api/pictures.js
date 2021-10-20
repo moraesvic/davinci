@@ -210,12 +210,14 @@ async function resizePic(path, maxSize, convertToJPEG = true, benchmark = true)
     let oldSize, newSize;
     oldSize = (await fsPromises.stat(path)).size;
 
-    console.log(
-    `Path ${path}
-    Current resolution is ${resolution}.
-    Dimensions must be reduced to ${proportion} % of original
-    Needs conversion : ${needsConversion}`
-    );    
+    if (benchmark) {
+        console.log(
+        `Path ${path}
+        Current resolution is ${resolution}.
+        Dimensions must be reduced to ${proportion} % of original
+        Needs conversion : ${needsConversion}`
+        );
+    }
     
     if (proportion < 100) {
         const newPath = `${path}_resize`;
@@ -258,7 +260,7 @@ async function appendExtension(path, extension)
     return newPath;
 }
 
-function storePicture(fileStatus, allowRedundant = true)
+function storePicture(fileStatus, allowRedundant = false)
 {
     /* The option allowRedundant will allow a new picture into the database
      * even if there is already an identical picture.
@@ -271,48 +273,84 @@ function storePicture(fileStatus, allowRedundant = true)
         }
         try {
             const MAX_PIC_RESOLUTION = 300; // pixels
-            /* Let's process the file, stripping metadata, resizing
-             * and getting MD5 hash */
-            await testMimeType(fileStatus.path, "image");
-            await stripPicMetadata(fileStatus.path);
-            await resizePic(fileStatus.path, MAX_PIC_RESOLUTION);
-            fileStatus.path = await renameMimeType(fileStatus.path);
+            let picId;
+
+            /* First thing is getting the MD5 hash */
             const md5sum = await md5File(fileStatus.path);
 
-            console.log(`md5sum is ${md5sum}`)
+            let isPicAlreadyInDB = await DB.query(`
+            SELECT pic_id FROM pics WHERE pic_md5 = $1 LIMIT 1
+            `, [md5sum]);
 
-            const origName = fileStatus.originalname;
-
-            if (!allowRedundant) {
-                let isPicAlreadyInDB = await DB.query(`
-                SELECT pic_id FROM pics WHERE pic_md5 = $1 LIMIT 1
+            if (isPicAlreadyInDB.rows.length) {
+                console.log("Picture was already in DB!")
+                fsPromises.unlink(fileStatus.path);
+                
+                picId = isPicAlreadyInDB.rows[0].pic_id;
+                DB.query(`
+                UPDATE pics
+                SET pic_ref_count = pic_ref_count + 1
+                WHERE pic_md5 = $1 ;
                 `, [md5sum]);
-    
-                if (isPicAlreadyInDB.rows.length) {
-                    deletePicture({ path: fileStatus.path });
-                    resolve(isPicAlreadyInDB.rows[0].pic_id);
-                    return;
-                }
+
+                resolve(isPicAlreadyInDB.rows[0].pic_id);
+                return;
+
+            } else {
+
+                /* Let's process the file, stripping metadata, resizing
+                 * and getting MD5 hash */
+
+                await testMimeType(fileStatus.path, "image");
+                await stripPicMetadata(fileStatus.path);
+                await resizePic(fileStatus.path, MAX_PIC_RESOLUTION);
+                fileStatus.path = await renameMimeType(fileStatus.path);
+
+                const origName = fileStatus.originalname;
+
+                let responseDB = await DB.query(`
+                INSERT INTO pics (
+                    pic_orig_name,
+                    pic_md5,
+                    pic_path
+                ) VALUES (
+                    $1::text,
+                    $2::text,
+                    $3::text
+                ) RETURNING pic_id;`, [origName, md5sum, fileStatus.path]);
+
+                picId = responseDB.rows[0].pic_id;
+
             }
 
-            let responseDB = await DB.query(`
-            INSERT INTO pics (
-                pic_orig_name,
-                pic_md5,
-                pic_path
-            ) VALUES (
-                $1::text,
-                $2::text,
-                $3::text
-            ) RETURNING pic_id;`, [origName, md5sum, fileStatus.path]);
-
-            resolve(responseDB.rows[0].pic_id);
+            resolve(picId);
 
         } catch (err) {
-            deletePicture({ path: fileStatus.path });
+            fsPromises.unlink(fileStatus.path);
             reject(err);
         }
     });
+}
+
+async function decreaseRefCount(picId)
+{
+    try {
+        let responseDB = await DB.query(`
+        UPDATE pics
+        SET pic_ref_count = pic_ref_count + 1
+        WHERE pic_id = $1 
+        RETURNING pic_ref_count ;`,
+        [ picId ]);
+    
+        if (!responseDB.rows.length)
+            throw "Could not decrease picture reference count!"
+        
+        if (response.DB.rows[0].pic_ref_count === 0)
+            deletePicture({ id: picId });
+
+    } catch (err) {
+        throw `Failed to decrease picture reference count!`;
+    }
 }
 
 async function deletePicture(kwargs)

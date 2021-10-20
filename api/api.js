@@ -149,12 +149,12 @@ module.exports = function(app){
 				pictures.deletePicture({id: pic});
 
 			await DB.query(`
-			DELETE FROM products;
+			DELETE FROM products ;
 			`);
 
 			let delPics = await DB.query(`
 			DELETE FROM pics
-			RETURNING pic_id;
+			RETURNING pic_id ;
 			`);
 			
 			res.send(`deleted ${picsSet.size + delPics.rows.length} pictures and ${result.rows.length} products`);
