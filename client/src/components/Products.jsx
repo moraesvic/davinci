@@ -84,7 +84,7 @@ function Products(props)
 
     /* */
 
-    const CARDS_PER_PAGE = 10;
+    const CARDS_PER_PAGE = 8;
     const [currentPage, setCurrentPage] = React.useState(0);
 
     function decreasePage()

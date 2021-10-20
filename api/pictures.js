@@ -69,6 +69,27 @@ function processPicture(req, res, fieldName)
     }); 
 }
 
+async function testMimeType(fileStatus, rename = true)
+{
+    /* not currently in use, but could be in the future */
+    /* Get REAL mime-type. Multer's implementation is not correct */
+
+    /* This will output something like image/png, image/jpeg, text/plain */
+    const [mimetype, _] = await chpr(
+        `file --mime-type "${fileStatus.path}" | sed -rn "s/^.+[[:space:]]+(.*)$/\\1/p"`);
+    const [type, subtype] = mimetype.replace("\n" , "").split("/");
+
+    if (type !== "image")
+        throw "This is not an image!";
+    
+    /* rename to extension "subtype" */
+    if (rename) {
+        const newPath = `${fileStatus.path}.${subtype.toLowerCase()}`;
+        await fsPromises.rename(fileStatus.path, newPath);
+        fileStatus.path = newPath;
+    }
+}
+
 function storePicture(fileStatus, allowRedundant = true)
 {
     /* The option allowRedundant will allow a new picture into the database
@@ -81,24 +102,16 @@ function storePicture(fileStatus, allowRedundant = true)
             return;
         }
         try {
-            /* Get REAL mime-type. Multer's implementation is not correct */
-            /* This will output something like image/png, image/jpeg, text/plain */
-            const [mimetype, _] = await chpr(
-                `file --mime-type "${fileStatus.path}" | sed -rn "s/^.+[[:space:]]+(.*)$/\\1/p"`);
-            const [type, subtype] = mimetype.replace("\n" , "").split("/");
-
-            if (type !== "image")
-                throw "This is not an image!";
-            
-            /* rename to extension "subtype" */
-            const newPath = `${fileStatus.path}.${subtype.toLowerCase()}`;
-            await fsPromises.rename(fileStatus.path, newPath);
-            fileStatus.path = newPath;
-            
             /* Let's process the file, stripping metadata and getting MD5 hash */
             
             const [md5sum, stderr] = await chpr(`./api/process_img "${fileStatus.path}"`);
             console.log(stderr);
+
+            /* We will also need to redefined fileStatus.path, since the command
+             * adds the extension .jpeg during conversion */
+            const newPath = `${fileStatus.path}.jpeg`;
+            fileStatus.path = newPath;
+
             const origName = fileStatus.originalname;
 
             if (!allowRedundant) {

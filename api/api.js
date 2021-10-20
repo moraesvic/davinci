@@ -16,7 +16,7 @@ module.exports = function(app){
 
     /* PRODUCTS */
 	app.get(`${prefix}/list-products`, async function(req,res) {
-		const PRODUCTS_PER_PAGE = 10;
+		const PRODUCTS_PER_PAGE = 8;
 		const offset = 	req.query.page ?
 						PRODUCTS_PER_PAGE * req.query.page :
 						0;

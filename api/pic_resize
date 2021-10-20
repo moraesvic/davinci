@@ -52,12 +52,15 @@ resolution="$(exiftool "$src_full_path" 2> /dev/null | \
 proportion=$($dir_name/find_proportion.py "$resolution" "$max_resolution_px")
 >&2 echo "Dimensions must be reduced to $proportion % of original (in both axes)"
 
-if [ $proportion = "100" ] ; then
-	>&2 echo "Nothing to do here"
-	exit 0
-fi
+# hacky hacky hacky superbad
+
+# if [ $proportion = "100" ] ; then
+# 	>&2 echo "Nothing to do here"
+# 	exit 0
+# fi
 
 # We will just overwrite the file. For a more sophisticated treatment,
 # refer to https://github.com/moraesvic/pic_resize
 
-convert -resize "${proportion}%" "$src_full_path" "$src_full_path"
+convert -resize "${proportion}%" "$src_full_path" "${src_full_path}.jpeg"
+rm "$src_full_path"

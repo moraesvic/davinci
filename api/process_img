@@ -23,11 +23,13 @@ fi
 # Strip all metadata from file
 exiftool -overwrite_original -all= "$1" &> /dev/null
 
-# Reduce resolution if too large
-"$(dirname "$0")"/pic_resize $1
+# A series of hacks around here. Later we need to refactor this
 
-# Print md5sum from file
-(md5sum "$1" 2> /dev/null | \
+# Reduce resolution if too large
+"$(dirname "$0")"/pic_resize "$1"
+
+# Print md5sum from processed file
+(md5sum "$1.jpeg" 2> /dev/null | \
 	cut -d" " -f1 2> /dev/null | \
 	tr -d "\n") || exit 1
 
