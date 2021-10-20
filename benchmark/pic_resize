@@ -3,6 +3,8 @@ After running populate_db :
 	max 800 px			: 5.2 M
 	max 600 px			: 4.2 M
 	max 600 px + jpeg	: 2.8 M
+	checking every op	: 2.5 M
+	same, 300px			: 1.2 M
 
 Remember : it is not so important to reduce image size **in the server**,
 but to make pages load faster.

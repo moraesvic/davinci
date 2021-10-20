@@ -158,38 +158,73 @@ async function resizePicBenchmark(oldPath, newPath)
     );
 }
 
+async function checkOperation(oldPath, newPath, opId = null)
+{
+    /* Reducing image resolution and changing file encoding
+     * CAN reduce size, but not always does.
+     * This will check if it was actually effective and
+     * revert operation if it wasn't */
+
+    const oldSize = (await fsPromises.stat(oldPath)).size;
+    const newSize = (await fsPromises.stat(newPath)).size;
+
+    opId = opId || "";
+
+    console.log(`
+    Original size: ${oldSize}
+    After operation "${opId}": ${newSize}
+    `)
+
+    if (newSize < oldSize) {
+        /* If that improved file size, overwrite image */
+        console.log("Operation improved file size. Overwriting original");
+        await fsPromises.rename(newPath, oldPath);
+    }
+    else {
+        /* If not, remove converted file */
+        console.log("Operation did not improve file size. Rolling back");
+        await fsPromises.unlink(newPath);
+    }
+}
+
 async function resizePic(path, maxSize, convertToJPEG = true, benchmark = true)
 {
     /* Will always overwrite original */
     /* Please note that sometimes JPEG can be larger than PNG,
      * this is not a bug, although it is annoying */
+
+    /* Another weird fact is that sometimes shrinking resolution can make
+     * a file have a larger size. This is due to how compression operates
+     * https://computergraphics.stackexchange.com/questions/4824/reducing-image-size-increases-file-size/4825
+     */
+
+    /* For these two cases we have helper function checkOperation() */
+
     const resolution = await getPicResolution(path);
     const proportion = calculateProportion(resolution, maxSize);
     const [, subtype] = await getMimeType(path);
     const needsConversion = convertToJPEG && subtype !== "jpeg";
 
     let oldSize, newSize;
-    if (benchmark)
-        oldSize = (await fsPromises.stat(path)).size;
+    oldSize = (await fsPromises.stat(path)).size;
 
     console.log(
     `Path ${path}
     Current resolution is ${resolution}.
     Dimensions must be reduced to ${proportion} % of original
     Needs conversion : ${needsConversion}`
-    );
-
-    const resizeOption =    proportion < 100 ?
-                            `-resize ${proportion}%` :
-                            "";
-    let newPath =           convertToJPEG ?
-                            `${path}.jpeg` :
-                            path;
+    );    
     
-    /* Check if there is actually anything to be done */
-    if (proportion < 100 || needsConversion) {
-        await chpr(`convert ${resizeOption} "${path}" "${newPath}"`);
-        await fsPromises.rename(newPath, path);
+    if (proportion < 100) {
+        const newPath = `${path}_resize`;
+        await chpr(`convert -resize ${proportion}% "${path}" "${newPath}"`);
+        await checkOperation(path, newPath, opId = "resize");
+    }
+        
+    if (needsConversion) {
+        const newPath = `${path}.jpeg`;
+        await chpr(`convert "${path}" "${newPath}"`);
+        await checkOperation(path, newPath, opId = "JPEG conversion");
     }
 
     if (benchmark) {
@@ -233,7 +268,7 @@ function storePicture(fileStatus, allowRedundant = true)
             return;
         }
         try {
-            const MAX_PIC_RESOLUTION = 600; // pixels
+            const MAX_PIC_RESOLUTION = 300; // pixels
             /* Let's process the file, stripping metadata, resizing
              * and getting MD5 hash */
             await testMimeType(fileStatus.path, "image");
