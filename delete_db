@@ -9,4 +9,5 @@ url="http://${url/\/\//\/}"
 
 echo "DELETE request will be sent to $url"
 
-curl -vL -X DELETE "$url"
+curl -L -X DELETE "$url"
+echo ""

@@ -1,5 +1,5 @@
 const fsPromises = require('fs').promises;
-const path = require('path');
+const Path = require('path');
 const Multer  = require('multer');
 
 const DB = require("./db");
@@ -69,25 +69,156 @@ function processPicture(req, res, fieldName)
     }); 
 }
 
-async function testMimeType(fileStatus, rename = true)
+async function getMimeType(path)
 {
-    /* not currently in use, but could be in the future */
+    /* (fileStatus) -> [type, subtype] */
     /* Get REAL mime-type. Multer's implementation is not correct */
 
     /* This will output something like image/png, image/jpeg, text/plain */
     const [mimetype, _] = await chpr(
-        `file --mime-type "${fileStatus.path}" | sed -rn "s/^.+[[:space:]]+(.*)$/\\1/p"`);
+        `file --mime-type "${path}" | sed -rn "s/^.+[[:space:]]+(.*)$/\\1/p"`);
     const [type, subtype] = mimetype.replace("\n" , "").split("/");
 
-    if (type !== "image")
-        throw "This is not an image!";
+    return [type, subtype];
+}
+
+async function testMimeType(path, allowed)
+{
+    /* (fileStatus, string / list) -> [type, subtype] */
+    const [type, subtype] = await getMimeType(path);
+
+    if (typeof(allowed) === "string")
+        allowed = [allowed];
+
+    if (!allowed.includes(type))
+        throw `"${type}" is not an allowed type!`;
+
+    return [type, subtype];
+}
+
+async function renameMimeType(path, subtype = null)
+{
+    if (!subtype)
+        [, subtype] = await getMimeType(path);
+
+    const newPath = appendExtension(path, subtype);
+    return newPath;
+}
+
+async function stripPicMetadata(path)
+{
+    await chpr(`
+    exiftool -overwrite_original -all= "${path}"
+    `);
+}
+
+async function md5File(path)
+{
+    const cmd = `md5sum "${path}" | cut -d" " -f1 | tr -d "\n"`;
+    const [md5sum, ] = await chpr(cmd);
+    return md5sum;
+}
+
+async function getPicResolution(path)
+{
+    const [resolution, ] = await chpr(`
+    exiftool "${path}" | \
+	sed -rn "s/^Image Size[^0-9]*([0-9]+x[0-9]+)$/\\1/p" | \
+    tr -d "\n"
+    `);
+    return resolution;
+}
+
+function calculateProportion(strResolution, maxSize)
+{
+    /* Returns resize proportion, in percentage */
+    const resRegex = /^(\d+)x(\d+)$/;
+    const match = resRegex.exec(strResolution);
+    if (!match)
+        throw `Bad input ${strResolution}!`
+
+    const [width, height] = [ match[1], match[2] ];
+    const biggest = Math.max(width, height);
+    const factor = biggest <= maxSize ? 1.0 : maxSize / biggest;
+
+    return Math.floor(factor * 100);
+}
+
+async function resizePicBenchmark(oldPath, newPath)
+{
+    const promises = [ fsPromises.stat(oldPath) , fsPromises.stat(newPath) ];
+    const [ oldStat, newStat ] = await Promise.all(promises);
+    const [ oldSize, newSize ] = [ oldStat.size, newStat.size ];
+    const reduction = (100.0 * (1.0 - newSize / oldSize)).toFixed(2);
+    const savedSpace = oldSize - newSize;
+    console.log(
+    `Old size was ${oldSize}, new size is ${newSize} (${reduction}% reduction).
+    Saved space: ${savedSpace} bytes.
+    `
+    );
+}
+
+async function resizePic(path, maxSize, convertToJPEG = true, benchmark = true)
+{
+    /* Will always overwrite original */
+    /* Please note that sometimes JPEG can be larger than PNG,
+     * this is not a bug, although it is annoying */
+    const resolution = await getPicResolution(path);
+    const proportion = calculateProportion(resolution, maxSize);
+    const [, subtype] = await getMimeType(path);
+    const needsConversion = convertToJPEG && subtype !== "jpeg";
+
+    let oldSize, newSize;
+    if (benchmark)
+        oldSize = (await fsPromises.stat(path)).size;
+
+    console.log(
+    `Path ${path}
+    Current resolution is ${resolution}.
+    Dimensions must be reduced to ${proportion} % of original
+    Needs conversion : ${needsConversion}`
+    );
+
+    const resizeOption =    proportion < 100 ?
+                            `-resize ${proportion}%` :
+                            "";
+    let newPath =           convertToJPEG ?
+                            `${path}.jpeg` :
+                            path;
     
-    /* rename to extension "subtype" */
-    if (rename) {
-        const newPath = `${fileStatus.path}.${subtype.toLowerCase()}`;
-        await fsPromises.rename(fileStatus.path, newPath);
-        fileStatus.path = newPath;
+    /* Check if there is actually anything to be done */
+    if (proportion < 100 || needsConversion) {
+        await chpr(`convert ${resizeOption} "${path}" "${newPath}"`);
+        await fsPromises.rename(newPath, path);
     }
+
+    if (benchmark) {
+        newSize = (await fsPromises.stat(path)).size;
+        const reduction = (100.0 * (1.0 - newSize / oldSize)).toFixed(2);
+        const savedSpace = oldSize - newSize;
+        console.log(
+        `Old size was ${oldSize}, new size is ${newSize} (${reduction}% reduction).
+        Saved space: ${savedSpace} bytes.
+        `
+        );
+    }
+}
+
+async function appendExtension(path, extension)
+{
+    /* appends an extension to a file, if it does not already have it */
+    let newPath;
+    const currentExt = Path.extname(path);
+
+    if (currentExt !== extension) {
+        const dir = Path.dirname(path);
+        const fileWithoutExtension = Path.basename(path, currentExt);
+        newPath = `${dir}/${fileWithoutExtension}.${extension}`;
+    } else
+        newPath = path;
+
+    await fsPromises.rename(path, newPath);
+    return newPath;
 }
 
 function storePicture(fileStatus, allowRedundant = true)
@@ -102,15 +233,16 @@ function storePicture(fileStatus, allowRedundant = true)
             return;
         }
         try {
-            /* Let's process the file, stripping metadata and getting MD5 hash */
-            
-            const [md5sum, stderr] = await chpr(`./api/process_img "${fileStatus.path}"`);
-            console.log(stderr);
+            const MAX_PIC_RESOLUTION = 600; // pixels
+            /* Let's process the file, stripping metadata, resizing
+             * and getting MD5 hash */
+            await testMimeType(fileStatus.path, "image");
+            await stripPicMetadata(fileStatus.path);
+            await resizePic(fileStatus.path, MAX_PIC_RESOLUTION);
+            fileStatus.path = await renameMimeType(fileStatus.path);
+            const md5sum = await md5File(fileStatus.path);
 
-            /* We will also need to redefined fileStatus.path, since the command
-             * adds the extension .jpeg during conversion */
-            const newPath = `${fileStatus.path}.jpeg`;
-            fileStatus.path = newPath;
+            console.log(`md5sum is ${md5sum}`)
 
             const origName = fileStatus.originalname;
 
